@@ -1,0 +1,13 @@
+# Serviço do backend no Linux (systemd): sobe sozinho e reinicia se cair
+# sudo cp farol-api.service /etc/systemd/system/ && sudo systemctl enable --now farol-api
+[Unit]
+Description=Farol FM API
+After=network-online.target
+[Service]
+WorkingDirectory=/opt/farol-fm/server
+ExecStart=/usr/bin/node server.js
+Restart=always
+User=farol
+Environment=NODE_ENV=production
+[Install]
+WantedBy=multi-user.target

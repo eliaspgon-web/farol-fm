@@ -1,0 +1,11 @@
+# Cloudflare Tunnel — expõe o backend (porta 3000) em https://api.farolradiotv.com.br
+# 1) cloudflared tunnel login
+# 2) cloudflared tunnel create farol-api            (gera o ID e o arquivo de credenciais)
+# 3) cloudflared tunnel route dns farol-api api.farolradiotv.com.br   (cria o CNAME automaticamente)
+# 4) copie este arquivo para ~/.cloudflared/config.yml, ajuste o ID e rode: cloudflared tunnel run farol-api
+tunnel: COLE-AQUI-O-ID-DO-TUNNEL
+credentials-file: /home/USUARIO/.cloudflared/COLE-AQUI-O-ID-DO-TUNNEL.json
+ingress:
+  - hostname: api.farolradiotv.com.br
+    service: http://localhost:3000
+  - service: http_status:404
