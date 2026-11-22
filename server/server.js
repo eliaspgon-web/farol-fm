@@ -798,6 +798,25 @@ app.get(['/', '/index.html'], (req, res) => {
     .replace('<script>\n/* =', `<script>window.FAROL_API=location.origin;</script>\n<script>\n/* =`);
   res.type('html').send(html);
 });
+// imagem da matéria para a prévia: a foto enviada no painel (ou a capa gerada no deploy)
+app.get('/n/:id/capa.jpg', (req, res, next) => {
+  const p = get('posts', req.params.id); const m = /^data:(image\/[a-z+]+);base64,(.+)$/.exec((p && p.imagem) || '');
+  if (!m) return next();
+  res.type(m[1]).set('Cache-Control', 'public, max-age=3600').send(Buffer.from(m[2], 'base64'));
+});
+// prévia de compartilhamento de cada notícia (WhatsApp, Facebook, X): /n/<id>/ com os metadados da matéria
+app.get(['/n/:id', '/n/:id/'], (req, res, next) => {
+  const p = get('posts', req.params.id); if (!p || p.status !== 'publicado') return next();
+  const base = `${req.protocol}://${req.get('host')}`; const E = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const temCapa = /^data:image\//.test(p.imagem || '') || fs.existsSync(path.join(SITE_DIR, 'n', p.id, 'capa.jpg'));
+  const img = /^https?:/.test(p.imagem || '') ? p.imagem : temCapa ? `${base}/n/${encodeURIComponent(p.id)}/capa.jpg` : `${base}/assets/og-farol.jpg`;
+  const t = p.titulo || 'Farol FM'; const r = p.resumo || String(p.corpo || '').slice(0, 180); const alvo = `/#post-${encodeURIComponent(p.id)}`;
+  res.type('html').send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${E(t)} — Farol FM</title><meta name="description" content="${E(r)}">
+<meta property="og:site_name" content="Farol FM"><meta property="og:locale" content="pt_BR"><meta property="og:type" content="article"><meta property="og:title" content="${E(t)}"><meta property="og:description" content="${E(r)}">
+<meta property="og:url" content="${base}/n/${E(p.id)}/"><meta property="og:image" content="${E(img)}"><meta property="og:image:alt" content="${E(t)}"><meta property="article:published_time" content="${E(p.data)}">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${E(t)}"><meta name="twitter:description" content="${E(r)}"><meta name="twitter:image" content="${E(img)}">
+<meta http-equiv="refresh" content="0;url=${E(alvo)}"><script>location.replace(${JSON.stringify(alvo)})</script></head><body><a href="${E(alvo)}">Abrir a notícia na Farol FM</a></body></html>`);
+});
 app.use(express.static(SITE_DIR));
 
 

@@ -2,8 +2,11 @@ name: Publicar site no GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['site/**', '.github/workflows/pages.yml']
+    paths: ['site/**', 'scripts/**', 'server/seed.json', '.github/workflows/pages.yml']
   workflow_dispatch:
+  # com o servidor no ar (variável FAROL_API), atualiza a cada hora as prévias das notícias novas
+  schedule:
+    - cron: '17 * * * *'
 permissions:
   contents: read
   pages: write
@@ -13,9 +16,21 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
+    if: github.event_name != 'schedule' || vars.FAROL_API != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Gerar prévias de compartilhamento das notícias
+        env:
+          FAROL_API: ${{ vars.FAROL_API }}
+          SITE_URL: https://farolradiotv.com.br
+        run: |
+          sudo apt-get install -y -qq fonts-noto-color-emoji >/dev/null || true
+          pip install --quiet pillow
+          python3 scripts/share_pages.py site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
