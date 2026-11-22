@@ -48,13 +48,13 @@ const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
 db.exec(`CREATE TABLE IF NOT EXISTS docs (col TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL,
   updated INTEGER NOT NULL, PRIMARY KEY (col, id));`);
-const COLS = ['posts', 'videos', 'produtos', 'cupons', 'promocoes', 'pedidos', 'oracoes', 'musicas', 'conversas', 'anuncios'];
+const COLS = ['posts', 'videos', 'produtos', 'cupons', 'promocoes', 'pedidos', 'oracoes', 'musicas', 'conversas', 'anuncios', 'comentarios'];
 // perfis: admin (tudo), redacao (jornalismo), loja (vendas + atendimento)
 // Perfis da equipe: cada um enxerga e altera só os módulos liberados (o painel usa os mesmos nomes)
-const TODOS_MODULOS = ['dash', 'atendimento', 'equipe', 'aparencia', 'publicidade', 'redacao', 'posts', 'videos', 'oracoes', 'radio', 'redes', 'loja', 'pedidos', 'clientes', 'produtos', 'estoque', 'promocoes', 'cupons', 'campanhas', 'financeiro', 'pagamentos'];
+const TODOS_MODULOS = ['dash', 'atendimento', 'equipe', 'aparencia', 'publicidade', 'redacao', 'posts', 'comentarios', 'videos', 'oracoes', 'radio', 'redes', 'loja', 'pedidos', 'clientes', 'produtos', 'estoque', 'promocoes', 'cupons', 'campanhas', 'financeiro', 'pagamentos'];
 const PERFIS = {
-  admin: { m: TODOS_MODULOS, pub: true }, editor: { m: ['dash', 'redacao', 'posts', 'videos', 'oracoes', 'radio', 'redes'], pub: true },
-  jornalista: { m: ['dash', 'redacao', 'posts', 'videos'], pub: false }, colunista: { m: ['dash', 'posts'], pub: false },
+  admin: { m: TODOS_MODULOS, pub: true }, editor: { m: ['dash', 'redacao', 'posts', 'comentarios', 'videos', 'oracoes', 'radio', 'redes'], pub: true },
+  jornalista: { m: ['dash', 'redacao', 'posts', 'comentarios', 'videos'], pub: false }, colunista: { m: ['dash', 'posts'], pub: false },
   locutor: { m: ['dash', 'radio', 'oracoes', 'redes', 'videos'], pub: false },
   gerente: { m: ['dash', 'loja', 'pedidos', 'clientes', 'produtos', 'estoque', 'promocoes', 'cupons', 'campanhas', 'financeiro', 'pagamentos', 'atendimento'], pub: false },
   vendedor: { m: ['dash', 'atendimento', 'loja', 'pedidos', 'clientes'], pub: false }, comercial: { m: ['dash', 'publicidade', 'campanhas'], pub: false },
@@ -64,7 +64,7 @@ const papelOk = (p) => (p === 'redacao' ? 'editor' : p === 'loja' ? 'gerente' : 
 const modsDe = (u) => { const p = papelOk(u.papel); if (p === 'admin') return TODOS_MODULOS; return Array.isArray(u.modulos) && u.modulos.length ? u.modulos.filter((m) => TODOS_MODULOS.includes(m)) : (PERFIS[p] || { m: [] }).m; };
 const pubDe = (u) => papelOk(u.papel) === 'admin' || (u.publicar ?? (PERFIS[papelOk(u.papel)] || {}).pub) === true;
 // coleção → módulos que podem alterá-la
-const COL_MOD = { posts: ['posts'], videos: ['videos'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque'], cupons: ['cupons'], promocoes: ['promocoes'], pedidos: ['pedidos'], conversas: ['atendimento'], anuncios: ['publicidade'] };
+const COL_MOD = { posts: ['posts'], videos: ['videos'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque'], cupons: ['cupons'], promocoes: ['promocoes'], pedidos: ['pedidos'], conversas: ['atendimento'], anuncios: ['publicidade'], comentarios: ['comentarios'] };
 // configurações → módulo que pode alterá-las (quem tem "aparencia" altera todas)
 const SETTINGS_MOD = {
   radio: ['rdsAtivo', 'rdsUrl', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'aoVivo', 'programacao'],
@@ -73,6 +73,7 @@ const SETTINGS_MOD = {
   pagamentos: ['pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja'],
   publicidade: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots'],
   campanhas: ['googleClientId', 'cupomBoasVindas', 'politicaPrivacidade'],
+  comentarios: ['comentariosAtivo', 'comentariosModeracao', 'comentariosLogin', 'palavrasBloqueadas'],
   atendimento: ['waVendas', 'horarioAtendimento', 'botNome'],
 };
 const q = {
@@ -235,7 +236,7 @@ app.get('/api/bootstrap', (req, res) => {
     produtos: all('produtos').filter((p) => p.ativo),
     promocoes: all('promocoes').filter((c) => c.ativo && inRange(c.inicio, c.fim)),
     anuncios: all('anuncios').filter((a) => a.ativo && inRange(a.inicio, a.fim)).map(({ views, clicks, ...a }) => a),
-    cupons: [], pedidos: [], oracoes: [], musicas: [], conversas: [],
+    cupons: [], pedidos: [], oracoes: [], musicas: [], conversas: [], comentarios: [],
     settings: publicSettings(),
   });
 });
@@ -256,6 +257,35 @@ setInterval(() => {
   if (!adBuf.size) return; const batch = [...adBuf]; adBuf.clear();
   db.transaction(() => { for (const [k, n] of batch) { const [id, ev] = k.split('|'); const a = get('anuncios', id); if (a) { a[ev === 'view' ? 'views' : 'clicks'] = (+a[ev === 'view' ? 'views' : 'clicks'] || 0) + n; put('anuncios', a); } } })();
 }, 30e3);
+/* comentários dos leitores no fim das notícias */
+const PALAVRAS_PADRAO = 'idiota, imbecil, burro, otario, babaca, porra, caralho, merda, puta, viado, desgraçado, vagabundo';
+const normCom = (t) => ' ' + String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+const comSuspeito = (t, s) => /https?:\/\/|www\.|\.com\b/i.test(t) || String(s.palavrasBloqueadas ?? PALAVRAS_PADRAO).split(',').map((x) => normCom(x).trim()).filter(Boolean).some((x) => normCom(t).includes(' ' + x + ' '));
+const comPub = ({ email, ip, contaId, autorId, ...c }) => c;
+const contaDoToken = (req) => { try { const t = jwt.verify(String(req.headers.authorization || '').replace('Bearer ', ''), JWT_SECRET); return t.tipo === 'cliente' ? get('contas', t.sub) : null; } catch { return null; } };
+app.get('/api/posts/:id/comentarios', (req, res) => {
+  res.json(all('comentarios').filter((c) => c.postId === req.params.id && c.status === 'aprovado').sort((a, b) => String(a.data).localeCompare(b.data)).slice(-500).map(comPub));
+});
+app.post('/api/comentarios', limit(6, 10 * 60e3), (req, res) => {
+  const s = settings(); const b = req.body || {};
+  if (s.comentariosAtivo === false) return res.status(403).json({ error: 'Os comentários estão desativados no momento.' });
+  if (b.site) return res.json({ id: uid(), status: 'pendente' }); // armadilha anti-robô
+  const post = get('posts', String(b.postId || '')); if (!post) return res.status(404).json({ error: 'Notícia não encontrada' });
+  const conta = contaDoToken(req);
+  if (s.comentariosLogin && !conta) return res.status(401).json({ error: 'Entre na sua conta para comentar.' });
+  const nome = String(conta?.nome || b.nome || '').trim().slice(0, 60); const texto = String(b.texto || '').trim().slice(0, 1000);
+  if (nome.length < 2) return res.status(400).json({ error: 'Informe seu nome' });
+  if (texto.length < 3) return res.status(400).json({ error: 'Escreva seu comentário' });
+  let pai = null; if (b.pai) { const p = get('comentarios', String(b.pai)); if (!p || p.postId !== post.id) return res.status(400).json({ error: 'Comentário original não encontrado' }); pai = p.pai || p.id; }
+  const c = put('comentarios', { id: uid(), postId: post.id, pai, nome, texto, email: conta?.email || '', contaId: conta?.id || null, ip: req.ip, data: now(), curtidas: 0,
+    status: s.comentariosModeracao === 'previa' || comSuspeito(texto, s) ? 'pendente' : 'aprovado' });
+  res.json(comPub(c));
+});
+app.post('/api/comentarios/:id/:ev', limit(60), (req, res) => {
+  const { id, ev } = req.params; if (!['curtir', 'descurtir'].includes(ev)) return res.status(400).end();
+  const c = get('comentarios', id); if (!c || c.status !== 'aprovado') return res.status(404).end();
+  c.curtidas = Math.max(0, (+c.curtidas || 0) + (ev === 'curtir' ? 1 : -1)); put('comentarios', c); res.json({ curtidas: c.curtidas });
+});
 app.post('/api/musicas', limit(5), (req, res) => {
   const { nome, texto } = req.body || {}; if (!texto) return res.status(400).json({ error: 'Escreva o pedido' });
   put('musicas', { id: uid(), nome: String(nome || 'Ouvinte').slice(0, 80), texto: String(texto).slice(0, 600), origem: 'site', lido: false, data: now() });
@@ -378,7 +408,7 @@ app.put('/api/admin/usuarios/:id', auth('admin'), ok(async (req, res) => {
 }));
 app.delete('/api/admin/usuarios/:id', auth('admin'), (req, res) => { if (req.params.id === req.user.id) return res.status(400).json({ error: 'Você não pode excluir o próprio acesso' }); q.del.run('usuarios', req.params.id); res.json({ ok: true }); });
 app.get('/api/admin/bootstrap', auth(), (req, res) => {
-  const LEITURA = { posts: ['posts', 'redacao'], videos: ['videos', 'redes'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque', 'loja', 'pedidos', 'promocoes', 'publicidade', 'campanhas', 'atendimento'], cupons: ['cupons', 'campanhas', 'loja'], promocoes: ['promocoes', 'loja', 'produtos'], pedidos: ['pedidos', 'loja', 'financeiro', 'clientes', 'atendimento'], conversas: ['atendimento'], anuncios: ['publicidade'] };
+  const LEITURA = { posts: ['posts', 'redacao'], videos: ['videos', 'redes'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque', 'loja', 'pedidos', 'promocoes', 'publicidade', 'campanhas', 'atendimento'], cupons: ['cupons', 'campanhas', 'loja'], promocoes: ['promocoes', 'loja', 'produtos'], pedidos: ['pedidos', 'loja', 'financeiro', 'clientes', 'atendimento'], conversas: ['atendimento'], anuncios: ['publicidade'], comentarios: ['comentarios'] };
   const o = {}; for (const c of COLS) o[c] = can(req.user, LEITURA[c] || COL_MOD[c]) ? all(c) : (c === 'posts' ? all(c).filter((p) => p.status === 'publicado') : []);
   o.conversas.forEach((c) => delete c.k);
   if (papelOk(req.user.papel) === 'admin') o.usuarios = all('usuarios').map(userPub);
