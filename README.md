@@ -16,7 +16,7 @@ site/assets/         → logos em PNG
 server/              → backend Node (API, banco SQLite, Mercado Pago, webhook, YouTube)
 ```
 
-> **Publicação e DNS:** veja [DNS.md](DNS.md) — domínio farolradiotv.com.br.
+> **Publicação:** passo a passo em [CLOUDFLARE.md](CLOUDFLARE.md) e registros em [DNS.md](DNS.md) — domínio farolradiotv.com.br.
 
 ## 1) Modo demonstração (sem servidor)
 Abra `site/index.html` ou publique no GitHub Pages. Os dados ficam salvos no navegador.
