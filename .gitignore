@@ -4,3 +4,4 @@ server/*.db
 server/*.db-*
 .DS_Store
 site/n/
+__pycache__/
