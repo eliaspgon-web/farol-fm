@@ -860,7 +860,7 @@ body.player-mini .ad-mob{bottom:84px}
 <div id="toast"></div>
 <audio id="aud" preload="none"></audio>
 
-<script src="config.js"></script>
+<script src="config.js?v=2"></script>
 <script>
 /* ===========================================================
    CONFIGURAÇÃO
@@ -868,7 +868,7 @@ body.player-mini .ad-mob{bottom:84px}
    no navegador). Para produção, aponte para o backend:
    ex.: 'https://api.farolnews.com.br'
    =========================================================== */
-const CFG = { API: window.FAROL_API || '' };
+const CFG = { API: window.FAROL_API || (/(^|\.)farolradiotv\.com\.br$/.test(location.hostname) ? 'https://api.farolradiotv.com.br' : '') }; // no domínio oficial, usa sempre o servidor
 
 /* ===================== ÍCONES ===================== */
 const IC = {
