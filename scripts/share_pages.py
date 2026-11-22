@@ -7,6 +7,7 @@ Fontes das notícias: server/seed.json e, se a variável FAROL_API estiver defin
 as notícias publicadas no servidor (/api/bootstrap). Uso: python3 scripts/share_pages.py site
 """
 import base64, html, io, json, os, sys, unicodedata, urllib.request
+from datetime import datetime, timezone
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +21,9 @@ LOGO = Image.open(os.path.join(ROOT, 'logo-circle.png')).convert('RGBA')
 e = lambda s: html.escape(str(s or ''), quote=True)
 
 
+CONFIG = {}
+
+
 def carregar():
     posts = {}
     with open(os.path.join(ROOT, '..', 'server', 'seed.json'), encoding='utf-8') as f:
@@ -28,7 +32,8 @@ def carregar():
     if API:
         try:
             with urllib.request.urlopen(API + '/api/bootstrap', timeout=20) as r:
-                for p in json.load(r).get('posts', []):
+                j = json.load(r); CONFIG.update(j.get('settings') or {})
+                for p in j.get('posts', []):
                     posts[p['id']] = p
         except Exception as ex:
             print('Aviso: não foi possível ler as notícias do servidor:', ex)
@@ -149,6 +154,34 @@ def main():
         with open(os.path.join(pasta, 'index.html'), 'w', encoding='utf-8') as f: f.write(pagina(p, img))
         n += 1
     print(f'{n} páginas de compartilhamento geradas em {base}')
+    google(posts)
+
+
+def google(posts):
+    """ads.txt, sitemap.xml, robots.txt e as tags do Google direto no HTML (o AdSense e o Search Console leem o HTML sem JavaScript)."""
+    pub = str(CONFIG.get('adsenseClient') or '').strip(); pid = pub.replace('ca-', '')
+    with open(os.path.join(SITE, 'ads.txt'), 'w', encoding='utf-8') as f:
+        f.write('# ads.txt da Farol FM — gerado automaticamente a partir do painel (Publicidade › Google AdSense)\n')
+        f.write(f'google.com, {pid}, DIRECT, f08c47fec0942fa0\n' if pid.startswith('pub-') else '# Preencha o ID do editor do AdSense no painel para liberar esta linha.\n')
+    hoje = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    urls = [(URL + '/', hoje, '1.0')] + [(f"{URL}/n/{p['id']}/", str(p.get('data', hoje))[:10], '0.8') for p in posts if '/' not in str(p.get('id', ''))]
+    with open(os.path.join(SITE, 'sitemap.xml'), 'w', encoding='utf-8') as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n')
+        for u, d, pr in urls: f.write(f'  <url><loc>{html.escape(u)}</loc><lastmod>{d}</lastmod><priority>{pr}</priority></url>\n')
+        f.write('</urlset>\n')
+    with open(os.path.join(SITE, 'robots.txt'), 'w', encoding='utf-8') as f:
+        f.write(f'User-agent: *\nAllow: /\n\nSitemap: {URL}/sitemap.xml\n')
+    idx = os.path.join(SITE, 'index.html')
+    if os.path.exists(idx):
+        h = open(idx, encoding='utf-8').read(); tags = []
+        if pub.startswith('ca-pub-'):
+            tags.append(f'<meta name="google-adsense-account" content="{e(pub)}">')
+            tags.append(f'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={e(pub)}" crossorigin="anonymous"></script>')
+        if CONFIG.get('gscVerify'): tags.append(f'<meta name="google-site-verification" content="{e(CONFIG["gscVerify"])}">')
+        if tags and '<!--google-->' not in h:
+            h = h.replace('</title>', '</title>\n<!--google-->' + ''.join(tags), 1)
+            open(idx, 'w', encoding='utf-8').write(h)
+    print('ads.txt, sitemap.xml e robots.txt gerados' + (' + tags do Google no HTML' if pub or CONFIG.get('gscVerify') else ''))
 
 
 if __name__ == '__main__':

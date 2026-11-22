@@ -72,7 +72,7 @@ const SETTINGS_MOD = {
   redes: ['ytChannelId', 'ytNome', 'ytHandle', 'youtube', 'igUser', 'instagram', 'igPosts', 'redesHome'],
   redacao: ['versiculos', 'categorias', 'carrosselQtd'],
   pagamentos: ['pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja'],
-  publicidade: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'adOculto', ...['topo', 'home1', 'home2', 'lateral1', 'lateral2', 'materia2', 'loja', 'radio', 'rodape', 'mobile'].map((k) => 'adOff_' + k)],
+  publicidade: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'adOculto', 'gaId', 'adsenseAuto', 'adsenseModo', 'gscVerify', 'cookiesAviso', ...['topo', 'home1', 'home2', 'lateral1', 'lateral2', 'materia2', 'loja', 'radio', 'rodape', 'mobile'].map((k) => 'adOff_' + k)],
   campanhas: ['googleClientId', 'cupomBoasVindas', 'politicaPrivacidade'],
   comentarios: ['comentariosAtivo', 'comentariosModeracao', 'comentariosLogin', 'palavrasBloqueadas'],
   atendimento: ['waVendas', 'horarioAtendimento', 'botNome'],
