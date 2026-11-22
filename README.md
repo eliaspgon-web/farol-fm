@@ -20,7 +20,7 @@ server/              → backend Node (API, banco SQLite, Mercado Pago, webhook,
 
 ## 1) Modo demonstração (sem servidor)
 Abra `site/index.html` ou publique no GitHub Pages. Os dados ficam salvos no navegador.
-- Gestão: `#gestao` (sem link no site). Na demonstração, escolha o perfil e use a senha **farol2026**.
+- Gestão: `#gestao` (sem link no site). Na demonstração entre com admin@farolradiotv.com.br, jornalista@farolradiotv.com.br ou vendas@farolradiotv.com.br, senha **farol2026**.
 - PIX: gera um QR Code e um copia-e-cola **reais** com a chave cadastrada em *Pagamentos & frete*. A baixa do pagamento é manual, no painel (botão "Confirmar pagamento").
 - Cartão: é só uma simulação. Use 4111 1111 1111 1111 para aprovar e um número terminado em 0002 para recusar.
 
@@ -58,14 +58,28 @@ Painel › Rádio & TV:
   - Para o feed automático (últimas 12 publicações), a conta precisa ser **profissional (Criador ou Empresa)**. Gere um token na "API do Instagram com login do Instagram" (developers.facebook.com) e coloque em `IG_ACCESS_TOKEN`. O servidor renova o token sozinho.
   - Sem token, aparece uma grade com link para o perfil. Também dá para colar links de posts e reels em Painel › Redes sociais para incorporá-los.
 
-## 5) Área administrativa (só para a equipe)
-- Não há link para ela no site: acesse **seusite/#gestao**. Ela abre com visual próprio, sem player, menu do site ou botão de WhatsApp.
-- **Perfis:**
-  - **Administrador:** tudo.
-  - **Redação:** painel da redação, notícias e colunas, vídeos, orações e músicas, rádio, redes.
-  - **Loja e vendas:** painel da loja, pedidos, clientes, produtos, estoque, promoções, cupons, financeiro, pagamentos e o **Atendimento WhatsApp**.
-- O servidor também confere o perfil em cada operação: Redação não consegue alterar preço nem a chave PIX, e Loja não altera notícias.
-- Logins da equipe: Painel › Equipe e acessos. O administrador principal fica no `.env`.
+## 5) Área administrativa e usuários (só para a equipe)
+- Não há link no site: acesse **seusite/#gestao**. A área abre com visual próprio, sem player nem botões do site.
+- **Usuários e permissões** (só o administrador): cadastre cada pessoa com nome, e-mail de login, WhatsApp, cargo, perfil e senha inicial.
+- **Perfis prontos** (cada pessoa vê só os módulos do perfil):
+
+| Perfil | O que vê |
+|---|---|
+| 👑 Administrador | Tudo, inclusive usuários e aparência |
+| 🗞️ Editor-chefe | Redação completa; revisa e **publica** |
+| ✍️ Jornalista / Repórter | Painel da redação, notícias e vídeos; envia para **revisão** |
+| 🖋️ Colunista | Colunas e artigos, para revisão |
+| 🎙️ Locutor / Produção | Rádio & TV, pedidos de música e oração, redes, vídeos |
+| 🛍️ Gerente da loja | Loja completa, financeiro, pagamentos e atendimento |
+| 💬 Vendedor | Atendimento WhatsApp, pedidos e clientes |
+| 📣 Comercial / Publicidade | Banners, anunciantes e campanhas de e-mail |
+| 💰 Financeiro | Financeiro, pedidos e clientes |
+
+- **Permissões sob medida:** dá para marcar ou desmarcar módulos por pessoa (ex.: um vendedor que também cuida dos cupons) e liberar "pode publicar sem revisão".
+- **Regras da redação:** jornalista e colunista só alteram as próprias matérias e nunca publicam direto; depois de publicada, só o editor mexe.
+- **Controle:** usuário pode ser **desativado**, e perde o acesso na hora, mesmo já logado. Cada pessoa troca a própria senha em **Meu perfil**.
+- **Segurança:** o servidor confere o perfil em toda operação (ex.: vendedor não altera produto nem chave PIX).
+- **Administrador principal:** definido no `.env` (`ADMIN_EMAIL` + senha). A demonstração tem 3 usuários de teste (senha `farol2026`): admin@, jornalista@ e vendas@farolradiotv.com.br.
 
 ## 6) Redação × Loja
 - **Redação:**

@@ -50,10 +50,30 @@ db.exec(`CREATE TABLE IF NOT EXISTS docs (col TEXT NOT NULL, id TEXT NOT NULL, d
   updated INTEGER NOT NULL, PRIMARY KEY (col, id));`);
 const COLS = ['posts', 'videos', 'produtos', 'cupons', 'promocoes', 'pedidos', 'oracoes', 'musicas', 'conversas', 'anuncios'];
 // perfis: admin (tudo), redacao (jornalismo), loja (vendas + atendimento)
-const COL_ROLE = { posts: 'redacao', videos: 'redacao', oracoes: 'redacao', musicas: 'redacao', produtos: 'loja', cupons: 'loja', promocoes: 'loja', pedidos: 'loja', conversas: 'loja', anuncios: 'loja' };
-const SETTINGS_ROLE = {
-  redacao: ['rdsAtivo', 'rdsUrl', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'ytNome', 'ytHandle', 'youtube', 'aoVivo', 'programacao', 'versiculos', 'categorias', 'carrosselQtd', 'redesHome', 'igUser', 'instagram', 'igPosts'],
-  loja: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'googleClientId', 'cupomBoasVindas', 'politicaPrivacidade', 'pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja', 'waVendas', 'horarioAtendimento', 'botNome'],
+// Perfis da equipe: cada um enxerga e altera só os módulos liberados (o painel usa os mesmos nomes)
+const TODOS_MODULOS = ['dash', 'atendimento', 'equipe', 'aparencia', 'publicidade', 'redacao', 'posts', 'videos', 'oracoes', 'radio', 'redes', 'loja', 'pedidos', 'clientes', 'produtos', 'estoque', 'promocoes', 'cupons', 'campanhas', 'financeiro', 'pagamentos'];
+const PERFIS = {
+  admin: { m: TODOS_MODULOS, pub: true }, editor: { m: ['dash', 'redacao', 'posts', 'videos', 'oracoes', 'radio', 'redes'], pub: true },
+  jornalista: { m: ['dash', 'redacao', 'posts', 'videos'], pub: false }, colunista: { m: ['dash', 'posts'], pub: false },
+  locutor: { m: ['dash', 'radio', 'oracoes', 'redes', 'videos'], pub: false },
+  gerente: { m: ['dash', 'loja', 'pedidos', 'clientes', 'produtos', 'estoque', 'promocoes', 'cupons', 'campanhas', 'financeiro', 'pagamentos', 'atendimento'], pub: false },
+  vendedor: { m: ['dash', 'atendimento', 'loja', 'pedidos', 'clientes'], pub: false }, comercial: { m: ['dash', 'publicidade', 'campanhas'], pub: false },
+  financeiro: { m: ['dash', 'financeiro', 'pedidos', 'clientes'], pub: false },
+};
+const papelOk = (p) => (p === 'redacao' ? 'editor' : p === 'loja' ? 'gerente' : p);
+const modsDe = (u) => { const p = papelOk(u.papel); if (p === 'admin') return TODOS_MODULOS; return Array.isArray(u.modulos) && u.modulos.length ? u.modulos.filter((m) => TODOS_MODULOS.includes(m)) : (PERFIS[p] || { m: [] }).m; };
+const pubDe = (u) => papelOk(u.papel) === 'admin' || (u.publicar ?? (PERFIS[papelOk(u.papel)] || {}).pub) === true;
+// coleção → módulos que podem alterá-la
+const COL_MOD = { posts: ['posts'], videos: ['videos'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque'], cupons: ['cupons'], promocoes: ['promocoes'], pedidos: ['pedidos'], conversas: ['atendimento'], anuncios: ['publicidade'] };
+// configurações → módulo que pode alterá-las (quem tem "aparencia" altera todas)
+const SETTINGS_MOD = {
+  radio: ['rdsAtivo', 'rdsUrl', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'aoVivo', 'programacao'],
+  redes: ['ytChannelId', 'ytNome', 'ytHandle', 'youtube', 'igUser', 'instagram', 'igPosts', 'redesHome'],
+  redacao: ['versiculos', 'categorias', 'carrosselQtd'],
+  pagamentos: ['pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja'],
+  publicidade: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots'],
+  campanhas: ['googleClientId', 'cupomBoasVindas', 'politicaPrivacidade'],
+  atendimento: ['waVendas', 'horarioAtendimento', 'botNome'],
 };
 const q = {
   all: db.prepare('SELECT data FROM docs WHERE col=?'),
@@ -195,11 +215,15 @@ const limit = (max, win = 60e3) => (req, res, next) => {
   a.push(t); hits.set(k, a); next();
 };
 const ok = (fn) => (req, res) => Promise.resolve(fn(req, res)).catch((e) => { console.error(e.mp || e); res.status(400).json({ error: e.message }); });
-const can = (user, role) => user.papel === 'admin' || !role || user.papel === role;
-const auth = (role) => (req, res, next) => {
-  try { req.user = jwt.verify(String(req.headers.authorization || '').replace('Bearer ', ''), JWT_SECRET); }
+// can(usuário, módulos): verdadeiro se o perfil tem pelo menos um dos módulos (ou é administrador)
+const can = (user, mods) => { if (papelOk(user.papel) === 'admin' || !mods) return true; const m = modsDe(user); return [].concat(mods).some((x) => m.includes(x)); };
+const auth = (mods) => (req, res, next) => {
+  let t; try { t = jwt.verify(String(req.headers.authorization || '').replace('Bearer ', ''), JWT_SECRET); }
   catch { return res.status(401).json({ error: 'Sessão expirada. Entre novamente.' }); }
-  if (role && !can(req.user, role)) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
+  // relê o usuário a cada pedido: alterações de perfil ou desativação valem na hora
+  if (t.id && t.id !== 'root') { const u = get('usuarios', t.id); if (!u || u.ativo === false) return res.status(401).json({ error: 'Acesso desativado. Fale com o administrador.' }); req.user = { id: u.id, sub: u.email, nome: u.nome, papel: u.papel, modulos: u.modulos, publicar: u.publicar }; }
+  else req.user = { id: 'root', sub: t.sub, nome: t.nome || 'Administrador', papel: t.papel || 'admin' };
+  if (mods === 'admin' ? papelOk(req.user.papel) !== 'admin' : (mods && !can(req.user, mods))) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
   next();
 };
 
@@ -318,36 +342,56 @@ app.post('/api/login', limit(8), ok(async (req, res) => {
   let user = null;
   if (em === ADMIN_EMAIL.toLowerCase()) {
     const passOk = ADMIN_PASSWORD_HASH ? await bcrypt.compare(String(senha), ADMIN_PASSWORD_HASH) : (ADMIN_PASSWORD && senha === ADMIN_PASSWORD);
-    if (passOk) user = { email: em, nome: 'Administrador', papel: 'admin' };
+    if (passOk) user = { id: 'root', email: em, nome: 'Administrador', papel: 'admin', cargo: 'Administrador principal' };
   } else {
     const u = all('usuarios').find((x) => x.email.toLowerCase() === em);
-    if (u && await bcrypt.compare(String(senha), u.hash)) user = { email: u.email, nome: u.nome, papel: u.papel };
+    if (u && await bcrypt.compare(String(senha), u.hash)) {
+      if (u.ativo === false) throw new Error('Usuário desativado. Fale com o administrador.');
+      u.ultimoAcesso = now(); put('usuarios', u); user = userPub(u);
+    }
   }
   if (!user) throw new Error('E-mail ou senha incorretos');
-  res.json({ token: jwt.sign({ sub: user.email, nome: user.nome, papel: user.papel }, JWT_SECRET, { expiresIn: '12h' }), nome: user.nome, papel: user.papel });
+  res.json({ token: jwt.sign({ sub: user.email, id: user.id, nome: user.nome, papel: user.papel }, JWT_SECRET, { expiresIn: '12h' }), user: { ...user, modulos: modsDe(user), publicar: pubDe(user) }, nome: user.nome, papel: user.papel });
+}));
+const userPub = ({ hash, ...u }) => u;
+app.put('/api/admin/me', auth(), ok(async (req, res) => {
+  if (req.user.id === 'root') throw new Error('A senha do administrador principal é definida no arquivo .env do servidor');
+  const u = get('usuarios', req.user.id); if (!u || !(await bcrypt.compare(String(req.body.senhaAtual || ''), u.hash))) throw new Error('Senha atual incorreta');
+  const sen = String(req.body.senha || ''); if (sen.length < 8 || !/[a-zA-Z]/.test(sen) || !/\d/.test(sen)) throw new Error('Senha fraca: mínimo 8 caracteres, com letras e números');
+  u.hash = await bcrypt.hash(sen, 10); put('usuarios', u); res.json({ ok: true });
 }));
 app.put('/api/admin/usuarios/:id', auth('admin'), ok(async (req, res) => {
-  const { nome, email, papel, senha } = req.body || {}; const old = get('usuarios', req.params.id) || {};
-  if (!['admin', 'redacao', 'loja'].includes(papel)) throw new Error('Perfil inválido');
-  if (!old.hash && (!senha || senha.length < 8)) throw new Error('Senha com no mínimo 8 caracteres');
-  if (all('usuarios').some((u) => u.email.toLowerCase() === String(email).toLowerCase() && u.id !== req.params.id)) throw new Error('E-mail já cadastrado');
-  const u = put('usuarios', { id: req.params.id, nome, email, papel, hash: senha ? await bcrypt.hash(senha, 10) : old.hash });
-  res.json({ id: u.id, nome, email, papel });
+  const b = req.body || {}; const old = get('usuarios', req.params.id) || {};
+  const papel = papelOk(b.papel); if (!PERFIS[papel]) throw new Error('Perfil inválido');
+  const email = String(b.email || '').toLowerCase().trim(); if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) throw new Error('E-mail inválido');
+  if (String(b.nome || '').trim().length < 3) throw new Error('Informe o nome completo');
+  if (email === ADMIN_EMAIL.toLowerCase()) throw new Error('Este e-mail é do administrador principal (.env)');
+  const sen = String(b.senha || '');
+  if (sen && (sen.length < 8 || !/[a-zA-Z]/.test(sen) || !/\d/.test(sen))) throw new Error('Senha fraca: mínimo 8 caracteres, com letras e números');
+  if (!old.hash && !sen) throw new Error('Defina uma senha inicial');
+  if (all('usuarios').some((u) => u.email.toLowerCase() === email && u.id !== req.params.id)) throw new Error('E-mail já cadastrado');
+  if (req.params.id === req.user.id && b.ativo === false) throw new Error('Você não pode desativar o próprio acesso');
+  const u = put('usuarios', { ...old, id: req.params.id, nome: String(b.nome).trim().slice(0, 80), email, tel: String(b.tel || '').slice(0, 20), cargo: String(b.cargo || '').slice(0, 60), papel,
+    modulos: Array.isArray(b.modulos) ? b.modulos.filter((m) => TODOS_MODULOS.includes(m)) : [], publicar: b.publicar === undefined ? PERFIS[papel].pub : !!b.publicar, ativo: b.ativo !== false,
+    hash: sen ? await bcrypt.hash(sen, 10) : old.hash, criado: old.criado || now() });
+  res.json(userPub(u));
 }));
-app.delete('/api/admin/usuarios/:id', auth('admin'), (req, res) => { q.del.run('usuarios', req.params.id); res.json({ ok: true }); });
+app.delete('/api/admin/usuarios/:id', auth('admin'), (req, res) => { if (req.params.id === req.user.id) return res.status(400).json({ error: 'Você não pode excluir o próprio acesso' }); q.del.run('usuarios', req.params.id); res.json({ ok: true }); });
 app.get('/api/admin/bootstrap', auth(), (req, res) => {
-  const o = {}; for (const c of COLS) o[c] = can(req.user, COL_ROLE[c]) ? all(c) : [];
+  const LEITURA = { posts: ['posts', 'redacao'], videos: ['videos', 'redes'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque', 'loja', 'pedidos', 'promocoes', 'publicidade', 'campanhas', 'atendimento'], cupons: ['cupons', 'campanhas', 'loja'], promocoes: ['promocoes', 'loja', 'produtos'], pedidos: ['pedidos', 'loja', 'financeiro', 'clientes', 'atendimento'], conversas: ['atendimento'], anuncios: ['publicidade'] };
+  const o = {}; for (const c of COLS) o[c] = can(req.user, LEITURA[c] || COL_MOD[c]) ? all(c) : (c === 'posts' ? all(c).filter((p) => p.status === 'publicado') : []);
   o.conversas.forEach((c) => delete c.k);
-  if (req.user.papel === 'admin') o.usuarios = all('usuarios').map(({ id, nome, email, papel }) => ({ id, nome, email, papel }));
+  if (papelOk(req.user.papel) === 'admin') o.usuarios = all('usuarios').map(userPub);
+  o.me = { ...req.user, modulos: modsDe(req.user), publicar: pubDe(req.user) };
   o.pedidos.sort((a, b) => b.data.localeCompare(a.data)); o.oracoes.sort((a, b) => b.data.localeCompare(a.data));
   const s = { ...settings() }; delete s.id; o.settings = s; res.json(o);
 });
 app.put('/api/admin/settings', auth(), (req, res) => {
   const body = { ...req.body }; delete body.senhaAdmin;
-  if (req.user.papel !== 'admin') { const ok = SETTINGS_ROLE[req.user.papel] || []; for (const k of Object.keys(body)) if (!ok.includes(k)) delete body[k]; }
+  if (!can(req.user, 'aparencia')) { const m = modsDe(req.user); const ok = Object.entries(SETTINGS_MOD).filter(([mod]) => m.includes(mod)).flatMap(([, ks]) => ks); for (const k of Object.keys(body)) if (!ok.includes(k)) delete body[k]; }
   const s = { ...settings(), ...body, id: 'main' }; put('settings', s); res.json(s);
 });
-app.post('/api/admin/orders/:id/status', auth('loja'), ok((req, res) => {
+app.post('/api/admin/orders/:id/status', auth('pedidos'), ok((req, res) => {
   const o = get('pedidos', req.params.id); if (!o) throw new Error('Pedido não encontrado');
   const st = req.body.status; const LBL = { separacao: 'Em separação', enviado: 'Enviado', entregue: 'Entregue', cancelado: 'Cancelado', estornado: 'Estornado' };
   if (st === 'pago') return res.json(markPaid(o, 'Pagamento confirmado manualmente no painel'));
@@ -357,14 +401,21 @@ app.post('/api/admin/orders/:id/status', auth('loja'), ok((req, res) => {
 }));
 app.put('/api/admin/:col/:id', auth(), (req, res) => {
   const { col, id } = req.params; if (!COLS.includes(col)) return res.status(404).end();
-  if (!can(req.user, COL_ROLE[col])) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
+  if (!can(req.user, COL_MOD[col])) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
   const doc = { ...req.body, id };
+  if (col === 'posts' && !pubDe(req.user)) { // jornalista/colunista: só as próprias matérias, sempre para revisão
+    const old = get('posts', id);
+    if (old && (old.autorId !== req.user.id || old.status === 'publicado')) return res.status(403).json({ error: 'Somente o editor pode alterar esta matéria.' });
+    doc.autorId = req.user.id; if (doc.status === 'publicado') doc.status = 'revisao';
+  }
+  if (col === 'posts' && !doc.autorId) doc.autorId = req.user.id;
   if (col === 'anuncios') { const old = get('anuncios', id) || {}; doc.views = +old.views || 0; doc.clicks = +old.clicks || 0; }
   res.json(put(col, doc));
 });
 app.delete('/api/admin/:col/:id', auth(), (req, res) => {
   const { col, id } = req.params; if (!COLS.includes(col) || col === 'pedidos') return res.status(400).json({ error: 'Não permitido' });
-  if (!can(req.user, COL_ROLE[col])) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
+  if (!can(req.user, COL_MOD[col])) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
+  if (col === 'posts' && !pubDe(req.user)) { const old = get('posts', id); if (old && (old.autorId !== req.user.id || old.status === 'publicado')) return res.status(403).json({ error: 'Somente o editor pode excluir esta matéria.' }); }
   q.del.run(col, id); res.json({ ok: true });
 });
 
@@ -497,8 +548,8 @@ app.get('/api/conta/descadastrar', (req, res) => {
 });
 
 // Painel: contas e campanhas
-app.get('/api/admin/contas', auth('loja'), (req, res) => res.json(all('contas').map(contaPub).sort((a, b) => String(b.criado).localeCompare(a.criado))));
-app.get('/api/admin/campanhas', auth('loja'), (req, res) => res.json(all('campanhas').sort((a, b) => b.data.localeCompare(a.data))));
+app.get('/api/admin/contas', auth(['clientes', 'campanhas']), (req, res) => res.json(all('contas').map(contaPub).sort((a, b) => String(b.criado).localeCompare(a.criado))));
+app.get('/api/admin/campanhas', auth('campanhas'), (req, res) => res.json(all('campanhas').sort((a, b) => b.data.localeCompare(a.data))));
 function mailCampanha(cp, c) {
   const ps = (cp.prods || []).slice(0, 6).map((id) => get('produtos', id)).filter((p) => p && p.ativo);
   const nome = c ? escH(c.nome.split(' ')[0]) : 'cliente';
@@ -508,12 +559,12 @@ function mailCampanha(cp, c) {
   const unsub = c ? `${PUBLIC_URL}/api/conta/descadastrar?t=${c.unsub}` : '#';
   return { unsub, html: mailLayout(`<h2 style="color:#B5162E;margin-top:0">${titulo}</h2><p style="white-space:pre-wrap">${escH(cp.texto || '').replace(/\{nome\}/g, nome)}</p>${cp.cupom ? `<div style="border:2px dashed #F39A30;border-radius:10px;padding:12px;text-align:center;margin:16px 0">Use o cupom <b style="font-size:20px;letter-spacing:2px">${escH(cp.cupom)}</b></div>` : ''}${rows.length ? `<table width="100%" cellpadding="0" cellspacing="0">${rows.join('')}</table>` : ''}${btnMail(`${SITE()}/#loja`, 'Ver ofertas na loja')}`, `Você recebe este e-mail porque autorizou promoções da Farol FM. <a href="${unsub}" style="color:#8a7a7e">Não quero mais receber</a>.<br>`) };
 }
-app.post('/api/admin/campanhas/teste', auth('loja'), ok(async (req, res) => {
+app.post('/api/admin/campanhas/teste', auth('campanhas'), ok(async (req, res) => {
   const { html } = mailCampanha(req.body, { nome: req.user.nome, unsub: '' });
   const ok = await sendMail(req.user.sub, '[TESTE] ' + (req.body.assunto || ''), html);
   if (!ok) throw new Error('Envio de e-mail não configurado (SMTP no .env)'); res.json({ ok: true });
 }));
-app.post('/api/admin/campanhas', auth('loja'), ok(async (req, res) => {
+app.post('/api/admin/campanhas', auth('campanhas'), ok(async (req, res) => {
   if (!mailer) throw new Error('Configure o envio de e-mail (SMTP) no .env antes de disparar campanhas');
   const cp = { id: uid(), assunto: String(req.body.assunto || '').slice(0, 150), titulo: req.body.titulo, texto: req.body.texto, cupom: req.body.cupom, prods: req.body.prods || [], seg: req.body.seg || '', data: now(), por: req.user.nome, enviados: 0, falhas: 0, status: 'enviando' };
   if (!cp.assunto) throw new Error('Escreva o assunto');
@@ -557,15 +608,15 @@ app.post('/api/chat/:id/ia', limit(20), ok(async (req, res) => {
 }));
 
 // Painel: inbox
-app.get('/api/admin/conversas', auth('loja'), (req, res) => res.json(all('conversas').map(pubConv).sort((a, b) => String(b.atualizado).localeCompare(a.atualizado)).slice(0, 300)));
-app.post('/api/admin/conversas/:id/reply', auth('loja'), ok(async (req, res) => {
+app.get('/api/admin/conversas', auth('atendimento'), (req, res) => res.json(all('conversas').map(pubConv).sort((a, b) => String(b.atualizado).localeCompare(a.atualizado)).slice(0, 300)));
+app.post('/api/admin/conversas/:id/reply', auth('atendimento'), ok(async (req, res) => {
   const c = get('conversas', req.params.id); if (!c) throw new Error('Conversa não encontrada');
   const txt = String(req.body.texto || '').trim().slice(0, 4000); if (!txt) throw new Error('Mensagem vazia');
   if (c.modo !== 'humano') { c.modo = 'humano'; c.atendente = req.user.nome; }
   if (c.canal === 'whatsapp') await waText(c.contato, `*${req.user.nome} · Farol FM*\n${txt}`);
   c.msgs.push({ d: now(), de: 'atendente', txt, por: req.user.nome }); res.json(pubConv(touch(c)));
 }));
-app.post('/api/admin/conversas/:id/:acao', auth('loja'), ok(async (req, res) => {
+app.post('/api/admin/conversas/:id/:acao', auth('atendimento'), ok(async (req, res) => {
   const c = get('conversas', req.params.id); if (!c) throw new Error('Conversa não encontrada');
   if (req.params.acao === 'assumir') { c.modo = 'humano'; c.atendente = req.user.nome; c.msgs.push({ d: now(), de: 'sys', txt: `${req.user.nome} entrou no atendimento` }); }
   else if (req.params.acao === 'encerrar') {
