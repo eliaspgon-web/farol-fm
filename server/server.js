@@ -44,6 +44,7 @@ if (JWT_SECRET === 'troque-este-segredo') console.warn('⚠️  Defina JWT_SECRE
 if (!ADMIN_PASSWORD && !ADMIN_PASSWORD_HASH) console.warn('⚠️  Defina ADMIN_PASSWORD ou ADMIN_PASSWORD_HASH no .env');
 
 /* ------------------------------------------------------------------ banco */
+fs.mkdirSync(path.dirname(DB_FILE), { recursive: true }); // disco persistente do servidor na nuvem (ex.: /var/data)
 const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
 db.exec(`CREATE TABLE IF NOT EXISTS docs (col TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL,

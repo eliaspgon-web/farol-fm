@@ -25,6 +25,11 @@ Abra `site/index.html` ou publique no GitHub Pages. Os dados ficam salvos no nav
 - Cartão: é só uma simulação. Use 4111 1111 1111 1111 para aprovar e um número terminado em 0002 para recusar.
 
 ## 2) Produção (vendas reais)
+
+**Mais fácil: backend na nuvem (Render), sem computador ligado.** Clique em
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/eliaspgon-web/farol-fm)
+e siga o passo a passo em **[SERVIDOR-WEB.md](SERVIDOR-WEB.md)**. Abaixo, como rodar num computador ou VPS próprio.
+
 ```bash
 cd server
 cp .env.example .env        # preencha as variáveis
