@@ -788,6 +788,25 @@ body.player-mini .ad-mob{bottom:84px}
 [data-hv="c"] .gl-shop{background:var(--surf);border-radius:14px;padding:10px 10px 14px;border:0;box-shadow:0 2px 10px rgba(0,0,0,.05);border-top:4px solid var(--pri)}
 @media (max-width:960px){.hva-nav{display:none}.hvc-q{display:none}}
 @media (max-width:640px){.hva-live span{display:none!important}.hva-live{padding:8px!important}.hvc-in{gap:8px}.hvc-in .logo .wm{height:21px}}
+
+/* ===================== preenchimento de espaços vazios ===================== */
+.gl{align-items:start}
+.fill-card{display:flex}
+.fill-in{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;border:2px dashed color-mix(in srgb,var(--cc,var(--pri)) 45%,transparent);border-radius:12px;padding:20px;min-height:100%;aspect-ratio:auto;background:color-mix(in srgb,var(--cc,var(--pri)) 5%,var(--surf));transition:background .2s,transform .2s}
+.fill-card:hover .fill-in{background:color-mix(in srgb,var(--cc,var(--pri)) 11%,var(--surf));transform:translateY(-3px)}
+.fill-in span{font-size:30px}.fill-in b{font-size:17px;line-height:1.25;color:var(--cc,var(--pri))}.fill-in small{color:var(--mut);font-size:13px}
+.grid.g3>.fill-card{min-height:240px}
+.gl-hl{display:block;padding:12px 0;border-top:1px solid #e3e3e3}
+[data-hv="c"] .gl-hl{background:var(--surf);border-radius:12px;padding:12px 14px;border:0;border-left:4px solid var(--cc,var(--pri));box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:12px}
+.gl-hl span{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cc,var(--pri))}
+.gl-hl b{display:block;font-size:15.5px;line-height:1.3;margin-top:3px}.gl-hl:hover b{color:var(--pri)}
+.gl-box{margin-top:14px;border-radius:12px;padding:16px;background:var(--surf);border:1px solid #e9e9e9}
+[data-hv="c"] .gl-box{border:0;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.gl-box h4{font-family:Inter;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:0 0 10px}
+.gl-box .vd{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.gl-box .vd a{font-size:13px;font-weight:700;line-height:1.3}
+.gl-box .vd img{aspect-ratio:16/9;object-fit:cover;border-radius:8px;margin-bottom:6px}
+.gl-box .cl{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.gl-box .cl:first-of-type{border-top:0}
+.gl-box .cl .av{width:36px;height:36px;border-radius:50%;background:var(--brand,var(--pri));color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
 </style>
 </head>
 <body>
@@ -1097,6 +1116,10 @@ function carMount(){const c=$('#car');if(!c)return;const N=c.querySelectorAll('.
  c.addEventListener('click',e=>{if(c.dataset.sw){e.preventDefault()}})}
 function carHead(){return`<div class="sec-title" style="margin-top:26px"><h2>Principais notícias</h2><div class="sec-actions"><button class="btn ghost sm" onclick="S.carExp=!S.carExp;renderMain()" aria-expanded="${!!S.carExp}">${S.carExp?'⤡ Recolher':'⤢ Expandir'}</button></div></div>`}
 function expGrid(top){if(!S.carExp)return'';const more=postsSorted().filter(p=>!top.includes(p)).slice(0,6);return`<div class="expgrid"><div class="grid g3">${top.concat(more).map(pcard).join('')}</div></div>`}
+function padCat(c,ps){const n=3-ps.length;if(n<=0)return'';const s=ST();const cc=catCor(c);
+ const cards=[`<a class="pcard fill-card" href="https://wa.me/${esc(s.whatsapp)}?text=${encodeURIComponent('Olá, redação da Farol FM! Tenho uma pauta para a editoria '+c+': ')}" target="_blank" rel="noopener" style="--cc:${cc}"><div class="fill-in"><span>📝</span><b>Tem uma notícia de ${esc(c)}?</b><small>Envie sua pauta, foto ou vídeo para a redação pelo WhatsApp.</small></div></a>`,
+  `<a class="pcard fill-card" href="#cat-${slug(c)}" style="--cc:${cc}"><div class="fill-in"><span>📚</span><b>Tudo sobre ${esc(c)}</b><small>Veja o arquivo completo da editoria.</small></div></a>`];
+ return cards.slice(0,n).join('')}
 const pcard=p=>`<a class="pcard" href="#post-${p.id}"><img class="thumb" src="${imgPost(p)}" alt="" loading="lazy"><span class="chip" style="display:block;margin-top:10px">${esc(p.chapeu||p.categoria)}</span><h3>${esc(p.titulo)}</h3><p>${esc(p.resumo||'')}</p></a>`;
 const mini=p=>`<a class="mini" href="#post-${p.id}"><img src="${imgPost(p)}" alt="" loading="lazy"><div><span class="chip">${esc(p.chapeu||p.categoria)}</span><h3>${esc(p.titulo)}</h3></div></a>`;
 const lst=p=>`<a class="card lst" href="#post-${p.id}"><img src="${imgPost(p)}" alt="" loading="lazy"><div><span class="chip">${esc(p.categoria)}</span> <span class="small muted">· ${fdate(p.data)}</span><h3>${esc(p.titulo)}</h3><p>${esc(p.resumo||'')}</p></div></a>`;
@@ -1155,7 +1178,7 @@ function pgHome(){const ps=postsSorted();const dest=ps.filter(p=>p.destaque);con
   <div class="gl-c3">${glShop()}${glRadio()}${c3.map(p=>glCard(p)).join('')}</div></section>
   ${adSlot('home1')}
   <div class="home-top"><div>${rest.length?`<div class="sec-title" style="margin-top:0"><h2>Últimas notícias</h2><a href="#busca" onclick="S.q=''">Ver todas →</a></div><div class="gfeed">${rest.slice(0,fn).map(gcard).join('')}</div>${rest.length>fn?`<div class="more"><button class="btn ghost" onclick="S.feedN=(S.feedN||6)+6;renderMain()">Carregar mais notícias</button></div>`:''}`:''}
-  ${catBlocks.map(b=>`<div class="sec-title"><h2 style="color:${catCor(b.c)}">${esc(b.c)}</h2><a href="#cat-${slug(b.c)}">Ver mais →</a></div><div class="grid g3">${b.ps.map(pcard).join('')}</div>`).join('')}</div>
+  ${catBlocks.map(b=>`<div class="sec-title"><h2 style="color:${catCor(b.c)}">${esc(b.c)}</h2><a href="#cat-${slug(b.c)}">Ver mais →</a></div><div class="grid g3">${b.ps.map(pcard).join('')}${padCat(b.c,b.ps)}</div>`).join('')}</div>
   <aside class="side">${radioW()}${adSlot('lateral1')}${verseW()}${rankW()}${adSlot('lateral2')}</aside></div>
   ${socialSection()}
   ${adSlot('home2')}<div class="sec-title"><h2>Loja Farol FM</h2><a href="#loja">Ver loja →</a></div><div class="grid g4">${vit.map(prodCard).join('')}</div>${ctaConta()}</div>`}
@@ -1163,7 +1186,7 @@ function pgHome(){const ps=postsSorted();const dest=ps.filter(p=>p.destaque);con
   <div class="wrap"><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn ghost sm" onclick="S.carExp=!S.carExp;renderMain()">${S.carExp?'⤡ Recolher principais':'⤢ Expandir principais'}</button></div>${expGrid(tp)}${adSlot('home1')}<div class="sec-title"><h2>Em destaque</h2></div><div class="rv-row">${r.map(p=>`<a class="rv-card pcard" href="#post-${p.id}"><img src="${imgPost(p)}" alt=""><span class="chip" style="display:block;margin-top:10px">${esc(p.chapeu)}</span><h3>${esc(p.titulo)}</h3><p>${esc(p.resumo)}</p></a>`).join('')}</div>
   <div class="rv-quote"><q>${esc(v.t)}</q><cite>${esc(v.r)}</cite></div>
   <div class="rv-feature"><div class="yt-ph" style="aspect-ratio:4/3;cursor:pointer;background:var(--brand,var(--pri))" onclick="${ytLive()?'watchLive()':'togglePlay()'}"><img src="${LOGO_SRC}" alt="" style="width:46%;height:auto;inset:auto;opacity:1;position:static"><span class="pl">${ic('play')}</span></div><div><span class="live-dot">AO VIVO</span><h2>${esc(ST().radioNome)}</h2><p class="muted" style="font-size:17px">No ar: <b>${esc(noAr().n)}</b>. Ouça de onde estiver e assista às transmissões ao vivo pelo YouTube.</p><div class="row"><button class="btn" onclick="togglePlay()">${ic('play')} Ouvir</button>${ytLive()?`<button class="btn" style="background:#FF0000" onclick="watchLive()">${ic('tv')} Assistir</button>`:''}<a class="btn ghost" href="#radio">Programação</a></div></div></div>
-  ${catBlocks.map(b=>`<div class="sec-title"><h2>${esc(b.c)}</h2><a href="#cat-${slug(b.c)}">Ver tudo</a></div><div class="grid g3">${b.ps.map(pcard).join('')}</div>`).join('')}
+  ${catBlocks.map(b=>`<div class="sec-title"><h2>${esc(b.c)}</h2><a href="#cat-${slug(b.c)}">Ver tudo</a></div><div class="grid g3">${b.ps.map(pcard).join('')}${padCat(b.c,b.ps)}</div>`).join('')}
   ${adSlot('home2')}<div class="sec-title"><h2>A Loja</h2><a href="#loja">Ver tudo</a></div><div class="grid g4">${vit.map(prodCard).join('')}</div>
   ${socialSection()}</div>`}
  const g=noAr();return`${ultimaHora()}<div class="wrap"><div class="mn-head"><div class="grow"><span class="small muted" style="text-transform:capitalize">${hoje()}</span><h1 style="font-size:28px;margin:2px 0 0">${saud()} ✨</h1></div></div>${shopStrip().replace('class="shopstrip"','class="shopstrip" style="margin:0 0 16px"')}
@@ -1173,7 +1196,7 @@ function pgHome(){const ps=postsSorted();const dest=ps.filter(p=>p.destaque);con
   <aside class="side">${adSlot('lateral1')}${verseW()}${promoBanner().replace('shop-banner','shop-banner" style="margin-top:0;flex-direction:column;align-items:flex-start')}<div class="card widget"><h4>Na loja</h4><div class="grid" style="gap:12px">${vit.map(p=>`<a class="mini" href="#produto-${p.id}" style="grid-template-columns:64px 1fr"><img src="${imgProd(p)}" style="aspect-ratio:1" alt=""><div><b style="font-size:14px">${esc(p.nome)}</b><div class="price" style="font-size:16px">${brl(priceOf(p))}</div></div></a>`).join('')}</div></div>${rankW()}</aside></div></div>`}
 
 function pgCat(sl){const c=cats().find(x=>slug(x)===sl)||sl;const ps=postsSorted().filter(p=>slug(p.categoria)===sl);
- return`<div class="wrap"><div class="sec-title"><h2>${esc(c)}</h2><span class="small muted">${ps.length} notícias</span></div>${ps.length?(L()==='minimal'?`<div class="grid" style="gap:12px">${ps.map(lst).join('')}</div>`:`<div class="grid g3">${ps.map(pcard).join('')}</div>`):'<p class="muted">Nenhuma notícia nesta editoria ainda.</p>'}</div>`}
+ return`<div class="wrap"><div class="sec-title"><h2>${esc(c)}</h2><span class="small muted">${ps.length} notícias</span></div>${ps.length?(L()==='minimal'?`<div class="grid" style="gap:12px">${ps.map(lst).join('')}</div>`:`<div class="grid g3">${ps.map(pcard).join('')}${ps.length%3?padCat(c,ps.slice(0,ps.length%3)).split('</a>').slice(0,1).join('</a>')+'</a>':''}</div>`):'<p class="muted">Nenhuma notícia nesta editoria ainda.</p>'}</div>`}
 function pgBusca(){const q=slug(S.q||'');const ps=postsSorted().filter(p=>slug(p.titulo+' '+p.resumo+' '+p.categoria).includes(q));
  return`<div class="wrap"><div class="sec-title"><h2>${S.q?`Busca: “${esc(S.q)}”`:'Todas as notícias'}</h2><span class="small muted">${ps.length} resultado(s)</span></div><div class="grid" style="gap:12px">${ps.map(lst).join('')||'<p class="muted">Nada encontrado.</p>'}</div></div>`}
 function pgPost(id){const p=S.data.posts.find(x=>x.id===id);if(!p)return pg404();p.views=(p.views||0)+1;DB.persist('posts');if(CFG.API)api('POST',`/api/posts/${id}/view`).catch(()=>{});
@@ -1717,6 +1740,27 @@ function navBar(r,a){const t=trail(r,a);const up=[...t].reverse().find(x=>x[0])|
  <nav class="nb-crumbs" aria-label="Você está em">${t.map((x,i)=>x[0]?`<a href="#${x[0]}">${esc(x[1])}</a><span>›</span>`:`<b>${esc(x[1])}</b>`).join('')}</nav></div></div>`}
 function goBack(up){location.hash=up}
 
+
+/* ---- equilibra as 3 colunas da grade (preenche o que sobrar) ---- */
+function glBalance(){const g=document.querySelector('.gl');if(!g||innerWidth<=960)return;g.querySelectorAll('.gl-fill').forEach(e=>e.remove());
+ const cols=[...g.children].filter(c=>/gl-c\d/.test(c.className));if(cols.length<3)return;
+ const used=new Set([...document.querySelectorAll('#main a[href^="#post-"]')].map(a=>a.getAttribute('href')));
+ const pool=postsSorted().filter(p=>!used.has('#post-'+p.id));
+ const mk=h=>{const d=document.createElement('div');d.innerHTML=h.trim();const el=d.firstChild;el.classList.add('gl-fill');return el};
+ const vids=ytVideos().slice(0,3);const colun=postsSorted().filter(p=>p.tipo&&p.tipo!=='Notícia'&&p.tipo!=='Agenda').slice(0,3);const v=verseOfDay();
+ const fillers=[
+  vids.length?`<div class="gl-box"><h4>▶ Vídeos da Farol TV</h4><div class="vd">${vids.map(x=>`<a href="javascript:void 0" onclick="playYT('${esc(x.id)}',${esc(JSON.stringify(x.titulo))})"><img src="https://i.ytimg.com/vi/${encodeURIComponent(x.id)}/mqdefault.jpg" alt="" onerror="this.src='${ph(x.id,'▶️','')}'">${esc(trunc(x.titulo,60))}</a>`).join('')}</div></div>`:`<div class="gl-box"><h4>▶ Farol TV</h4><a class="row" href="#redes" style="gap:12px"><img src="${LOGO_SRC}" style="width:54px;height:54px;border-radius:50%" alt=""><div><b>Assista à Farol Radio TV</b><div class="small muted">Transmissões ao vivo, cultos e programas no YouTube</div></div></a></div>`,
+  colun.length?`<div class="gl-box"><h4>✍️ Colunas e artigos</h4>${colun.map(p=>`<a class="cl" href="#post-${p.id}"><span class="av">${esc(String(p.autor||'R').split(' ').filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join(''))}</span><div><div class="small muted">${esc(p.autor||'')}</div><b style="font-size:14px">${esc(trunc(p.titulo,70))}</b></div></a>`).join('')}</div>`:'',
+  `<div class="gl-box verse" style="border:0"><h4 style="color:rgba(255,255,255,.75)">Versículo do dia</h4><q>${esc(v.t)}</q><cite>${esc(v.r)}</cite></div>`,
+  `<a class="gl-box" href="#oracao" style="display:block"><h4>🙏 Pedido de oração</h4><b>Nossa equipe ora por você</b><div class="small muted">Envie seu pedido — ele pode ser lido no ar na Hora da Oração.</div></a>`,
+  `<a class="gl-box" href="#conta" style="display:block"><h4>💌 Clube Farol</h4><b>Receba promoções e novidades</b><div class="small muted">Crie sua conta grátis${ST().cupomBoasVindas?' e ganhe o cupom '+esc(ST().cupomBoasVindas):''}.</div></a>`
+ ].filter(Boolean);
+ const H=c=>[...c.children].reduce((t,e)=>{const r=e.getBoundingClientRect(),st=getComputedStyle(e);return t+r.height+parseFloat(st.marginTop)+parseFloat(st.marginBottom)},0);
+ for(let k=0;k<14;k++){const h=cols.map(H);const max=Math.max(...h);const i=h.indexOf(Math.min(...h));const gap=max-h[i];if(gap<80)break;
+  let el=null;if(gap>=230&&fillers.length)el=mk(fillers.shift());else if(pool.length){const p=pool.shift();el=mk(`<a class="gl-hl" href="#post-${p.id}" style="--cc:${catCor(p.categoria)}"><span>${esc(p.chapeu||p.categoria)}</span><b>${esc(p.titulo)}</b></a>`)}else if(fillers.length)el=mk(fillers.shift());
+  if(!el)break;cols[i].appendChild(el)}}
+let glT=null;addEventListener('resize',()=>{clearTimeout(glT);glT=setTimeout(glBalance,250)});
+
 /* ===================== ROTEADOR ===================== */
 let curRoute='inicio';const STORE_R=['loja','produto','carrinho','checkout','pedido','meuspedidos','conta'];
 function storeBar(r){const t=totals();return`<div class="storebar"><div class="wrap"><a class="sb-t" href="#loja">${ic('bag')}<span>Loja <b>Farol FM</b></span></a><form class="sb-q" onsubmit="S.shopQ=this.q.value.trim();location.hash='loja';if(curRoute==='loja')renderMain();return false"><input name="q" placeholder="Buscar produtos..." value="${esc(S.shopQ||'')}"><button aria-label="Buscar">${ic('search')}</button></form>
@@ -1728,7 +1772,7 @@ async function buscaPedido(f){const id=f.id.value.trim().toUpperCase().replace('
 function pgAdd(id){const p=S.data.produtos.find(x=>x.id===id);setTimeout(()=>{if(!p){location.hash='loja';return}if(varsOf(p).length){location.hash='produto-'+id;return}addCart(id,1);location.hash='carrinho'},10);return''}
 function renderMain(){const h=curRoute;const[r,...rest]=h.split('-');const a=rest.join('-');clearTimeout(pollT);
  const html=r==='inicio'?pgHome():r==='cat'?pgCat(a):r==='post'?pgPost(a):r==='videos'?pgVideos():r==='radio'?pgRadio():r==='loja'?pgLoja():r==='produto'?pgProduto(a):r==='carrinho'?pgCarrinho():r==='checkout'?pgCheckout():r==='pedido'?pgPedido(a):r==='gestao'?pgPainel():r==='busca'?pgBusca():r==='oracao'?pgOracao():r==='contato'?pgContato():r==='colunas'?pgColunas():r==='tag'?pgTag(a):r==='meuspedidos'?pgMeusPedidos():r==='conta'?pgConta(a):r==='privacidade'?pgPrivacidade():r==='add'?pgAdd(a):r==='redes'?pgRedes():pg404();
- if(r!=='conta')S.mePed=0;$('#main').innerHTML=(r!=='gestao'&&r!=='add'?adSlot('topo'):'')+(r!=='inicio'&&r!=='gestao'&&r!=='add'?navBar(r,a):'')+(STORE_R.includes(r)?storeBar(r):'')+html;carMount();if((r==='inicio'||r==='redes'||r==='videos')&&!S.soc.loaded)loadSocial();if(r==='checkout')mountCardBrick().catch(e=>console.error(e))}
+ if(r!=='conta')S.mePed=0;setTimeout(()=>{glBalance();if(document.fonts)document.fonts.ready.then(glBalance)},60);$('#main').innerHTML=(r!=='gestao'&&r!=='add'?adSlot('topo'):'')+(r!=='inicio'&&r!=='gestao'&&r!=='add'?navBar(r,a):'')+(STORE_R.includes(r)?storeBar(r):'')+html;carMount();if((r==='inicio'||r==='redes'||r==='videos')&&!S.soc.loaded)loadSocial();if(r==='checkout')mountCardBrick().catch(e=>console.error(e))}
 function renderAll(){renderHeader(curRoute);renderMain();renderFooter();renderPlayer();renderAdMob();$('#modelos-fab').classList.toggle('hide',!(ST().seletorPublico||S.adm.logged));document.body.classList.toggle('adm-mode',curRoute==='gestao');renderWA()}
 function route(){const prev=curRoute;curRoute=(location.hash||'#inicio').slice(1)||'inicio';renderAll();if(prev!==curRoute)window.scrollTo(0,0)}
 window.addEventListener('hashchange',()=>{closeDrawer();route()});
