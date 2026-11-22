@@ -1,0 +1,3 @@
+# ads.txt da Farol FM — obrigatório só se usar o Google AdSense.
+# Troque pub-0000000000000000 pelo seu ID de editor (aparece no AdSense) e apague o "#" da linha abaixo.
+# google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

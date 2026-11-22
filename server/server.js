@@ -48,12 +48,12 @@ const db = new Database(DB_FILE);
 db.pragma('journal_mode = WAL');
 db.exec(`CREATE TABLE IF NOT EXISTS docs (col TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL,
   updated INTEGER NOT NULL, PRIMARY KEY (col, id));`);
-const COLS = ['posts', 'videos', 'produtos', 'cupons', 'promocoes', 'pedidos', 'oracoes', 'musicas', 'conversas'];
+const COLS = ['posts', 'videos', 'produtos', 'cupons', 'promocoes', 'pedidos', 'oracoes', 'musicas', 'conversas', 'anuncios'];
 // perfis: admin (tudo), redacao (jornalismo), loja (vendas + atendimento)
-const COL_ROLE = { posts: 'redacao', videos: 'redacao', oracoes: 'redacao', musicas: 'redacao', produtos: 'loja', cupons: 'loja', promocoes: 'loja', pedidos: 'loja', conversas: 'loja' };
+const COL_ROLE = { posts: 'redacao', videos: 'redacao', oracoes: 'redacao', musicas: 'redacao', produtos: 'loja', cupons: 'loja', promocoes: 'loja', pedidos: 'loja', conversas: 'loja', anuncios: 'loja' };
 const SETTINGS_ROLE = {
   redacao: ['radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'ytNome', 'ytHandle', 'youtube', 'aoVivo', 'programacao', 'versiculos', 'categorias', 'carrosselQtd', 'redesHome', 'igUser', 'instagram', 'igPosts'],
-  loja: ['googleClientId', 'cupomBoasVindas', 'politicaPrivacidade', 'pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja', 'waVendas', 'horarioAtendimento', 'botNome'],
+  loja: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'googleClientId', 'cupomBoasVindas', 'politicaPrivacidade', 'pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja', 'waVendas', 'horarioAtendimento', 'botNome'],
 };
 const q = {
   all: db.prepare('SELECT data FROM docs WHERE col=?'),
@@ -210,6 +210,7 @@ app.get('/api/bootstrap', (req, res) => {
     videos: all('videos'),
     produtos: all('produtos').filter((p) => p.ativo),
     promocoes: all('promocoes').filter((c) => c.ativo && inRange(c.inicio, c.fim)),
+    anuncios: all('anuncios').filter((a) => a.ativo && inRange(a.inicio, a.fim)).map(({ views, clicks, ...a }) => a),
     cupons: [], pedidos: [], oracoes: [], musicas: [], conversas: [],
     settings: publicSettings(),
   });
@@ -221,6 +222,16 @@ app.get('/api/coupons/:code', limit(20), (req, res) => {
   res.json({ id, codigo, tipo, valor, minimo, validade, limite, usos, ativo });
 });
 app.post('/api/posts/:id/view', limit(30), (req, res) => { const p = get('posts', req.params.id); if (p) { p.views = (p.views || 0) + 1; put('posts', p); } res.json({ ok: true }); });
+// métricas de anúncios (visualizações e cliques); contadores somados em memória e gravados a cada 30 s
+const adBuf = new Map();
+app.post('/api/ads/:id/:ev', limit(120), (req, res) => {
+  const { id, ev } = req.params; if (!['view', 'click'].includes(ev)) return res.status(400).end();
+  const k = id + '|' + ev; adBuf.set(k, (adBuf.get(k) || 0) + 1); res.status(204).end();
+});
+setInterval(() => {
+  if (!adBuf.size) return; const batch = [...adBuf]; adBuf.clear();
+  db.transaction(() => { for (const [k, n] of batch) { const [id, ev] = k.split('|'); const a = get('anuncios', id); if (a) { a[ev === 'view' ? 'views' : 'clicks'] = (+a[ev === 'view' ? 'views' : 'clicks'] || 0) + n; put('anuncios', a); } } })();
+}, 30e3);
 app.post('/api/musicas', limit(5), (req, res) => {
   const { nome, texto } = req.body || {}; if (!texto) return res.status(400).json({ error: 'Escreva o pedido' });
   put('musicas', { id: uid(), nome: String(nome || 'Ouvinte').slice(0, 80), texto: String(texto).slice(0, 600), origem: 'site', lido: false, data: now() });
@@ -347,7 +358,9 @@ app.post('/api/admin/orders/:id/status', auth('loja'), ok((req, res) => {
 app.put('/api/admin/:col/:id', auth(), (req, res) => {
   const { col, id } = req.params; if (!COLS.includes(col)) return res.status(404).end();
   if (!can(req.user, COL_ROLE[col])) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
-  res.json(put(col, { ...req.body, id }));
+  const doc = { ...req.body, id };
+  if (col === 'anuncios') { const old = get('anuncios', id) || {}; doc.views = +old.views || 0; doc.clicks = +old.clicks || 0; }
+  res.json(put(col, doc));
 });
 app.delete('/api/admin/:col/:id', auth(), (req, res) => {
   const { col, id } = req.params; if (!COLS.includes(col) || col === 'pedidos') return res.status(400).json({ error: 'Não permitido' });
