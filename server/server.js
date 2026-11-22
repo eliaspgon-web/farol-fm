@@ -52,7 +52,7 @@ const COLS = ['posts', 'videos', 'produtos', 'cupons', 'promocoes', 'pedidos', '
 // perfis: admin (tudo), redacao (jornalismo), loja (vendas + atendimento)
 const COL_ROLE = { posts: 'redacao', videos: 'redacao', oracoes: 'redacao', musicas: 'redacao', produtos: 'loja', cupons: 'loja', promocoes: 'loja', pedidos: 'loja', conversas: 'loja', anuncios: 'loja' };
 const SETTINGS_ROLE = {
-  redacao: ['radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'ytNome', 'ytHandle', 'youtube', 'aoVivo', 'programacao', 'versiculos', 'categorias', 'carrosselQtd', 'redesHome', 'igUser', 'instagram', 'igPosts'],
+  redacao: ['rdsAtivo', 'rdsUrl', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'ytNome', 'ytHandle', 'youtube', 'aoVivo', 'programacao', 'versiculos', 'categorias', 'carrosselQtd', 'redesHome', 'igUser', 'instagram', 'igPosts'],
   loja: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'googleClientId', 'cupomBoasVindas', 'politicaPrivacidade', 'pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja', 'waVendas', 'horarioAtendimento', 'botNome'],
 };
 const q = {
@@ -718,6 +718,58 @@ app.get(['/', '/index.html'], (req, res) => {
   res.type('html').send(html);
 });
 app.use(express.static(SITE_DIR));
+
+
+/* ------------------------------------------------ RDS: música tocando agora */
+// Lê o título do próprio streaming (metadados ICY do Shoutcast/Icecast) ou de um JSON do painel do streaming.
+const npCache = { at: 0, data: null }; const capaCache = new Map();
+async function lerICY(url) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 7000);
+  try {
+    const r = await fetch(url, { headers: { 'Icy-MetaData': '1', 'User-Agent': 'FarolFM-RDS/1.0' }, signal: ctl.signal });
+    const metaint = +r.headers.get('icy-metaint'); if (!metaint || !r.body) return '';
+    const reader = r.body.getReader(); let buf = Buffer.alloc(0);
+    while (buf.length < metaint + 1 + 255 * 16) {
+      const { value, done } = await reader.read(); if (done) break; buf = Buffer.concat([buf, Buffer.from(value)]);
+      if (buf.length > metaint) { const len = buf[metaint] * 16; if (buf.length >= metaint + 1 + len) { const meta = buf.slice(metaint + 1, metaint + 1 + len).toString('utf8'); ctl.abort(); const m = meta.match(/StreamTitle='([^']*)'/); return m ? m[1] : ''; } }
+    }
+    ctl.abort(); return '';
+  } catch { return ''; } finally { clearTimeout(t); }
+}
+async function lerJSONRDS(url) {
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': 'FarolFM-RDS/1.0' } }); const tx = await r.text(); let j; try { j = JSON.parse(tx); } catch { return tx.trim().slice(0, 200); }
+    const src = j.icestats ? [].concat(j.icestats.source || [])[0] : null;
+    if (src) return src.artist && src.title ? `${src.artist} - ${src.title}` : (src.title || '');
+    if (j.songtitle) return j.songtitle;                                                   // Shoutcast v2 (/stats?sid=1&json=1)
+    if (j.now_playing?.song) return `${j.now_playing.song.artist} - ${j.now_playing.song.title}`; // AzuraCast
+    if (j.title) return j.artist ? `${j.artist} - ${j.title}` : j.title;
+    return '';
+  } catch { return ''; }
+}
+const tituloRDS = (t) => String(t || '').trim().toLowerCase().replace(/(^|[\s\-–—(\/"'“.&])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+async function capaDe(artista, musica) {
+  const k = (artista + '|' + musica).toLowerCase(); if (capaCache.has(k)) return capaCache.get(k);
+  let capa = '';
+  try {
+    const r = await fetch(`https://itunes.apple.com/search?country=BR&media=music&entity=song&limit=1&term=${encodeURIComponent(`${artista} ${musica}`.trim())}`);
+    const j = await r.json(); const u = j.results?.[0]?.artworkUrl100; if (u) capa = u.replace('100x100bb', '400x400bb');
+  } catch {}
+  capaCache.set(k, capa); if (capaCache.size > 500) capaCache.delete(capaCache.keys().next().value);
+  return capa;
+}
+app.get('/api/nowplaying', async (req, res) => {
+  const s = settings(); if (s.rdsAtivo === false) return res.json({});
+  if (Date.now() - npCache.at < 15e3 && npCache.data) return res.json(npCache.data);
+  const raw = (s.rdsUrl ? await lerJSONRDS(s.rdsUrl) : s.streamUrl ? await lerICY(s.streamUrl) : '').replace(/\s+/g, ' ').trim();
+  let data = {};
+  // vinhetas, spots e textos vazios não viram "música"
+  if (raw && !/^(-|n\/a|unknown|desconhecido|null)$/i.test(raw)) {
+    const parts = raw.split(/\s+[-–—]\s+/); const artista = parts.length > 1 ? tituloRDS(parts[0]) : ''; const musica = tituloRDS(parts.length > 1 ? parts.slice(1).join(' - ') : raw);
+    data = { raw, artista, musica, capa: artista ? await capaDe(artista, musica) : '' };
+  }
+  npCache.at = Date.now(); npCache.data = data; res.json(data);
+});
 
 /* ------------------------------------------------ REDES: YouTube + Instagram */
 const social = { yt: [], ytAt: 0, ig: [], igAt: 0 };

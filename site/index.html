@@ -720,6 +720,30 @@ h1,h2,h3,h4{letter-spacing:-.015em}
  .gl-row3{grid-template-columns:1fr 1fr}.gl-row3 .gl-card:nth-child(3){display:none}
  .gl .car-slide{aspect-ratio:4/5}.ad{margin:24px auto}.ad-topo{margin:12px auto 0;padding:0 12px}
 }
+
+/* ===================== RDS + barra da rádio recolhível ===================== */
+#player .part{object-fit:cover}
+#player .part.art{border-radius:10px;animation:none;box-shadow:0 0 0 2px rgba(255,255,255,.2)}
+#player .np{display:block;font-size:12.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#player .np i{font-style:normal;color:var(--acc);font-weight:700}
+#player .pmin{width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:inherit;cursor:pointer;font-size:16px;flex:none;transition:background .2s,transform .2s}
+#player .pmin:hover{background:rgba(255,255,255,.26);transform:translateY(2px)}
+#player.mini{left:16px;right:auto;bottom:16px;width:max-content;max-width:calc(100vw - 100px);border-radius:99px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#player.mini{display:block}#player.mini .wrap{height:auto;padding:6px;gap:8px;max-width:none;width:max-content;margin:0}
+#player.mini .pbtn{width:44px;height:44px}
+#player.mini .info,#player.mini .vol,#player.mini .watch,#player.mini .ghost,#player.mini .pmin{display:none}
+#player.mini .part{width:40px;height:40px}
+#player .pexp{display:none;border:0;background:rgba(255,255,255,.16);color:inherit;border-radius:99px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+#player.mini .pexp{display:inline-flex;align-items:center;gap:6px}
+#player.mini .pexp b{max-width:180px;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+body.player-mini{padding-bottom:24px}
+body.player-mini #modelos-fab{bottom:86px}
+body.player-mini #wa-fab{bottom:20px}body.player-mini #wa{bottom:92px}
+body.player-mini .ad-mob{bottom:84px}
+[data-layout="minimal"] #player.mini{left:276px;right:auto}
+.gb-info .np-h{color:var(--txt);font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.gb-info .np-h i{font-style:normal;color:var(--pri)}
+@media (max-width:640px){#player.mini{left:10px;bottom:12px}#player.mini .pexp b{max-width:120px}[data-layout="minimal"] #player.mini{left:10px;bottom:72px}}
 </style>
 </head>
 <body>
@@ -847,7 +871,7 @@ const SEED={
   categorias:'Igreja, Fé & Família, Missões, Mundo Cristão, Música Gospel, Sociedade, Alagoas, Eventos',
   catLoja:'Bíblias, Livros, Vestuário, Presentes, Música',
   layout:'classico',paleta:'farol',seletorPublico:false,
-  radioNome:'Rádio Farol FM',radioFreq:'FM',streamUrl:'',ytChannelId:'UCB3fJwRKWK6EZ3l7FRq3E6w',ytVideoId:'',aoVivo:false,
+  radioNome:'Rádio Farol FM',radioFreq:'FM',streamUrl:'',rdsAtivo:true,rdsUrl:'',radioBarra:'visivel',ytChannelId:'UCB3fJwRKWK6EZ3l7FRq3E6w',ytVideoId:'',aoVivo:false,
   programacao:'seg-sex|05:00|07:00|Madrugada com Deus|Equipe Farol\nseg-sex|07:00|09:00|Despertar com Fé|Pr. convidado\nseg-sex|09:00|12:00|Manhã de Louvor|Locutor Farol\nseg-sex|12:00|13:00|Farol Notícias|Redação\nseg-sex|13:00|18:00|Tarde Abençoada|Locutora Farol\nseg-sex|18:00|19:00|Hora da Oração|Equipe Farol\nseg-sex|19:00|23:59|Noite de Adoração|Locutor Farol\nsab|06:00|12:00|Sábado em Família|Equipe Farol\nsab|12:00|23:59|Louvores do Sábado|Automação\ndom|06:00|10:00|Culto ao Vivo|Transmissão\ndom|10:00|23:59|Domingo de Graça|Automação',
   versiculos:'Lâmpada para os meus pés é a tua palavra, e luz para o meu caminho.|Salmos 119:105\nO Senhor é o meu pastor; nada me faltará.|Salmos 23:1\nTudo posso naquele que me fortalece.|Filipenses 4:13\nVinde a mim, todos os que estais cansados e oprimidos, e eu vos aliviarei.|Mateus 11:28\nO amor é paciente, o amor é bondoso.|1 Coríntios 13:4\nEntrega o teu caminho ao Senhor; confia nele, e ele tudo fará.|Salmos 37:5\nVós sois a luz do mundo.|Mateus 5:14',
   waVendas:'5582999999999',waEstudio:'5582999999999',horarioAtendimento:'segunda a sábado, das 8h às 18h',botNome:'Assistente Farol',pixChave:'',pixNome:'FAROL FM',pixCidade:'MACEIO',pixDesconto:5,parcelasMax:6,parcelasSemJuros:3,jurosMes:2.49,
@@ -921,18 +945,35 @@ function grade(){return ST().programacao.split('\n').map(l=>l.split('|').map(x=>
 function noAr(){const d=new Date();const hm=d.toTimeString().slice(0,5);return grade().find(g=>g.dias.includes(d.getDay())&&g.i<=hm&&hm<g.f)||{n:'Programação musical',a:'Farol FM'}}
 function ytLive(){const s=ST();return s.aoVivo&&(s.ytVideoId||s.ytChannelId)}
 function ytEmbedSrc(){const s=ST();return s.ytVideoId?`https://www.youtube.com/embed/${encodeURIComponent(s.ytVideoId)}?autoplay=1`:`https://www.youtube.com/embed/live_stream?channel=${encodeURIComponent(s.ytChannelId)}&autoplay=1`}
+/* ---- RDS (música tocando agora) ---- */
+S.np=null;
+const tituloRDS=t=>String(t||'').trim().toLowerCase().replace(/(^|[\s\-–—(\/"'“.&])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());
+function parseRDS(raw){raw=String(raw||'').replace(/\s+/g,' ').trim();if(!raw||/^(-|n\/a|unknown|desconhecido)$/i.test(raw))return null;const m=raw.split(/\s+[-–—]\s+/);return m.length>1?{artista:tituloRDS(m[0]),musica:tituloRDS(m.slice(1).join(' - ')),raw}:{artista:'',musica:tituloRDS(raw),raw}}
+async function rdsPoll(){const s=ST();if(s.rdsAtivo===false)return;let np=null;
+ try{if(CFG.API){const j=await api('GET','/api/nowplaying');if(j&&(j.musica||j.raw))np={artista:tituloRDS(j.artista),musica:tituloRDS(j.musica||j.raw),capa:j.capa||'',raw:j.raw}}
+  else if(s.rdsUrl){const r=await fetch(s.rdsUrl,{cache:'no-store'});const tx=await r.text();let j=null;try{j=JSON.parse(tx)}catch(e){}
+   const src=j&&j.icestats?[].concat(j.icestats.source||[])[0]:null;const raw=j?(src?(src.title&&src.artist?src.artist+' - '+src.title:src.title):(j.songtitle||j.title&&(j.artist?j.artist+' - '+j.title:j.title)||j.now_playing&&j.now_playing.song&&(j.now_playing.song.artist+' - '+j.now_playing.song.title)||'')):tx;np=parseRDS(raw)}}catch(e){}
+ const mudou=JSON.stringify(np)!==JSON.stringify(S.np);S.np=np;if(mudou){renderPlayer();if(L()==='classico'&&curRoute!=='gestao')renderHeader(curRoute);mediaMeta()}}
+setInterval(()=>{if(!document.hidden)rdsPoll()},20000);setTimeout(rdsPoll,1500);
+function rdsTexto(){const n=S.np;return n&&n.musica?`${n.musica}${n.artista?' — '+n.artista:''}`:''}
+function mediaMeta(){try{const n=S.np;navigator.mediaSession.metadata=new MediaMetadata({title:n&&n.musica?n.musica:ST().radioNome,artist:n&&n.artista?n.artista:noAr().n,album:ST().radioNome,artwork:[{src:n&&n.capa?n.capa:location.href.split('#')[0].replace(/[^/]*$/,'')+'assets/logo-farol-circulo.png',sizes:'512x512'}]})}catch(e){}}
+function playerMin(v){LS.set('fr_pmin',v?1:0);renderPlayer()}
 function togglePlay(){const a=$('#aud');const s=ST();
  if(S.playing){a.pause();a.removeAttribute('src');a.load();S.playing=false;renderPlayer();renderHeader(curRoute);return}
  if(!s.streamUrl){toast('Configure a URL do streaming em Painel › Rádio');return}
- a.src=s.streamUrl;a.volume=LS.get('fr_vol',.9);a.play().then(()=>{S.playing=true;renderPlayer();renderHeader(curRoute);try{navigator.mediaSession.metadata=new MediaMetadata({title:s.radioNome,artist:noAr().n})}catch(e){}}).catch(()=>toast('Não foi possível tocar o streaming. Verifique a URL (precisa ser HTTPS).'))}
+ a.src=s.streamUrl;a.volume=LS.get('fr_vol',.9);a.play().then(()=>{S.playing=true;renderPlayer();renderHeader(curRoute);mediaMeta();rdsPoll()}).catch(()=>toast('Não foi possível tocar o streaming. Verifique a URL (precisa ser HTTPS).'))}
 function watchLive(){const s=ST();if(!s.ytVideoId&&!s.ytChannelId){toast('Configure o canal do YouTube em Painel › Redes sociais');return}
  if(S.playing)togglePlay();
  openModal(`<div class="row" style="margin-bottom:12px"><span class="live-dot">AO VIVO</span><b>${esc(s.radioNome)} — ${esc(noAr().n)}</b></div><iframe class="yt" src="${ytEmbedSrc()}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe><p class="small muted" style="margin:10px 0 0">Transmissão pelo canal ${esc(s.ytNome||'YouTube')} ${esc(s.ytHandle||'')}. ${s.aoVivo?'':'Se não houver live no momento, o YouTube mostra a próxima transmissão agendada. '}<a style="color:var(--pri);font-weight:700" href="${esc(s.youtube)}/live" target="_blank" rel="noopener">Abrir no YouTube</a> · <a style="color:#FF0000;font-weight:700" href="${ytSub()}" target="_blank" rel="noopener">Inscrever-se</a></p>`)}
-function renderPlayer(){const s=ST();const g=noAr();const live=ytLive();
- $('#player').innerHTML=`<div class="wrap"><button class="pbtn" onclick="togglePlay()" aria-label="Tocar/pausar">${ic(S.playing?'pause':'play')}</button><img class="part ${S.playing?'spin':''}" src="${LOGO_SRC}" alt="">
- <div class="info"><b>${esc(s.radioNome)} ${S.playing?'<span class="eq"><i></i><i></i><i></i></span>':''}</b><span>${S.playing?'No ar: ':'Ouça agora: '}${esc(g.n)}${g.a?' · '+esc(g.a):''}</span></div>
- <span class="vol row" style="gap:6px">${ic('vol')}<input type="range" min="0" max="1" step="0.05" value="${LS.get('fr_vol',.9)}" oninput="$('#aud').volume=this.value;LS.set('fr_vol',+this.value)"></span>
- ${live?`<button class="btn watch" onclick="watchLive()">${ic('tv')}<span class="lbl">Assistir ao vivo</span></button>`:`<a class="btn ghost sm" style="color:inherit;border-color:rgba(127,127,127,.4)" href="#radio">${ic('radio')}<span class="lbl">Programação</span></a>`}</div>`}
+function renderPlayer(){const s=ST();const g=noAr();const live=ytLive();const n=S.np;const rds=rdsTexto();
+ const pref=LS.get('fr_pmin',null);const mini=pref===null?s.radioBarra==='minimizada':!!+pref;const el=$('#player');el.classList.toggle('mini',mini);document.body.classList.toggle('player-mini',mini);
+ // regra do RDS: capa da música quando houver; bola da logo só quando não houver imagem
+ const art=n&&n.capa?`<img class="part art" src="${esc(n.capa)}" alt="Capa: ${esc(rds)}" onerror="this.src='${LOGO_SRC}';this.className='part ${S.playing?'spin':''}'">`:`<img class="part ${S.playing?'spin':''}" src="${LOGO_SRC}" alt="">`;
+ el.innerHTML=`<div class="wrap"><button class="pbtn" onclick="togglePlay()" aria-label="${S.playing?'Pausar':'Tocar'} a rádio">${ic(S.playing?'pause':'play')}</button>${art}
+ <div class="info"><b>${rds?esc(n.musica):esc(s.radioNome)} ${S.playing?'<span class="eq"><i></i><i></i><i></i></span>':''}</b><span class="np">${rds?`${n.artista?esc(n.artista)+' · ':''}<i>${esc(s.radioNome)}</i> · ${esc(g.n)}`:`${S.playing?'No ar: ':'Ouça agora: '}${esc(g.n)}${g.a?' · '+esc(g.a):''}`}</span></div>
+ <span class="vol row" style="gap:6px">${ic('vol')}<input type="range" min="0" max="1" step="0.05" value="${LS.get('fr_vol',.9)}" oninput="$('#aud').volume=this.value;LS.set('fr_vol',+this.value)" aria-label="Volume"></span>
+ ${live?`<button class="btn watch" onclick="watchLive()">${ic('tv')}<span class="lbl">Assistir ao vivo</span></button>`:`<a class="btn ghost sm" style="color:inherit;border-color:rgba(127,127,127,.4)" href="#radio">${ic('radio')}<span class="lbl">Programação</span></a>`}
+ <button class="pmin" onclick="playerMin(1)" title="Ocultar barra da rádio" aria-label="Ocultar barra da rádio">▾</button><button class="pexp" onclick="playerMin(0)" title="Mostrar barra da rádio" aria-label="Mostrar barra da rádio">▴ <b>${rds?esc(n.musica):esc(s.radioNome)}</b></button></div>`}
 
 /* ===================== HEADER / FOOTER POR LAYOUT ===================== */
 const L=()=>document.documentElement.dataset.layout;
@@ -962,7 +1003,7 @@ function renderHeader(cur){const l=L();if(cur==='gestao'){$('#hdr').innerHTML=ad
   <div class="gb-r"><button class="gb-lk gb-live" onclick="togglePlay()" aria-label="Ouvir ao vivo">${S.playing?'<span class="eq"><i></i><i></i><i></i></span>':ic('play')}<span>${S.playing?'No ar':'Ouvir ao vivo'}</span></button><a class="gb-lk gb-acc" href="#conta"><span>${S.me?esc((S.me.nome||'').split(' ')[0]):'Minha conta'}</span>${ic('user')}</a><a class="gb-lk" href="#carrinho" aria-label="Carrinho"><span>Carrinho</span>${ic('cart')}${totals().count?`<b class="n">${totals().count}</b>`:''}</a><button class="gb-lk" onclick="toggleSearch()" aria-label="Buscar"><span>Busca</span>${ic('search')}</button></div></div>
   <div class="gh-search ${S.searchOpen?'on':''}" id="ghs"><div class="wrap"><form onsubmit="return doSearch(this)"><input name="q" placeholder="O que você procura?" value="${esc(S.q)}"><button class="btn">${ic('search')} Buscar</button></form></div></div></header>
   <nav class="gb-nav" aria-label="Editorias"><div class="wrap"><a href="#inicio" class="${cur==='inicio'?'on':''}" style="color:var(--txt)">início</a>${cats().map(c=>`<a href="#cat-${slug(c)}" class="${cur==='cat-'+slug(c)?'on':''}" style="color:${catCor(c)}">${esc(c)}</a>`).join('')}<a href="#colunas" style="color:#455A64" class="${cur==='colunas'?'on':''}">colunas</a><a href="#redes" style="color:#C4170C" class="${cur==='redes'?'on':''}">tv & redes</a><a href="#radio" style="color:#F26B00" class="${cur==='radio'?'on':''}">rádio</a><a href="#loja" style="color:var(--pri)" class="${cur==='loja'?'on':''}">loja</a></div></nav>
-  <div class="gb-info"><div class="wrap"><span class="live-dot">NO AR</span><b>${esc(noAr().n)}</b><span>· ${esc(ST().radioNome)}</span><button onclick="togglePlay()">${S.playing?'❚❚ pausar':'▶ ouvir'}</button>${ytLive()?'<button onclick="watchLive()" style="color:#FF0000">● assistir</button>':''}<span class="gb-dt">${hoje()} · ${esc(ST().cidade)}</span></div></div>${cur==='inicio'?ultimaHora():''}`;
+  <div class="gb-info"><div class="wrap"><span class="live-dot">NO AR</span><b>${esc(noAr().n)}</b><span>· ${esc(ST().radioNome)}</span>${rdsTexto()?`<span class="np-h">· <i>♪</i> ${esc(rdsTexto())}</span>`:''}<button onclick="togglePlay()">${S.playing?'❚❚ pausar':'▶ ouvir'}</button>${ytLive()?'<button onclick="watchLive()" style="color:#FF0000">● assistir</button>':''}<span class="gb-dt">${hoje()} · ${esc(ST().cidade)}</span></div></div>${cur==='inicio'?ultimaHora():''}`;
  else if(l==='revista')$('#hdr').innerHTML=`<header class="rv-head"><div class="wrap"><div class="top"><span style="text-transform:capitalize">${hoje()}</span><div class="row" style="gap:12px">${social().replace(/class="icon "/g,'class="icon" style="width:16px;height:16px"')}${cartBtn()}</div></div>
   <div class="brand">${logoHTML()}</div><nav class="rv-nav">${navLinks(cur)}</nav></div></header>`;
  else{$('#hdr').innerHTML=`<aside class="mn-side">${logoHTML()}
@@ -1013,7 +1054,7 @@ const mini=p=>`<a class="mini" href="#post-${p.id}"><img src="${imgPost(p)}" alt
 const lst=p=>`<a class="card lst" href="#post-${p.id}"><img src="${imgPost(p)}" alt="" loading="lazy"><div><span class="chip">${esc(p.categoria)}</span> <span class="small muted">· ${fdate(p.data)}</span><h3>${esc(p.titulo)}</h3><p>${esc(p.resumo||'')}</p></div></a>`;
 function verseOfDay(){const v=ST().versiculos.split('\n').map(l=>l.split('|')).filter(a=>a[0]);const i=Math.floor(today0()/864e5)%v.length;return{t:v[i][0],r:v[i][1]||''}}
 const verseW=()=>{const v=verseOfDay();return`<div class="card widget verse"><h4>Versículo do dia</h4><q>${esc(v.t)}</q><cite>${esc(v.r)}</cite></div>`};
-const radioW=()=>{const s=ST();const g=noAr();return`<div class="card radiocard"><span class="live-dot">NO AR AGORA</span><h3 style="margin:0">${esc(g.n)}</h3><span class="muted small">${esc(g.a)} · ${esc(s.radioNome)}</span><div class="row"><button class="btn" onclick="togglePlay()">${ic(S.playing?'pause':'play')} ${S.playing?'Pausar':'Ouvir'}</button>${ytLive()?`<button class="btn watch" style="background:#FF0000" onclick="watchLive()">${ic('tv')} Assistir</button>`:''}</div></div>`};
+const radioW=()=>{const s=ST();const g=noAr();return`<div class="card radiocard"><span class="live-dot">NO AR AGORA</span><h3 style="margin:0">${esc(g.n)}</h3>${rdsTexto()?`<span class="small"><b style="color:var(--pri)">♪</b> ${esc(rdsTexto())}</span>`:''}<span class="muted small">${esc(g.a)} · ${esc(s.radioNome)}</span><div class="row"><button class="btn" onclick="togglePlay()">${ic(S.playing?'pause':'play')} ${S.playing?'Pausar':'Ouvir'}</button>${ytLive()?`<button class="btn watch" style="background:#FF0000" onclick="watchLive()">${ic('tv')} Assistir</button>`:''}</div></div>`};
 const rankW=()=>`<div class="card widget"><h4>Mais lidas</h4><ol class="rank">${[...S.data.posts].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,5).map(p=>`<li><a href="#post-${p.id}">${esc(p.titulo)}</a></li>`).join('')}</ol></div>`;
 const shopW=()=>{const p=S.data.produtos.filter(x=>x.ativo&&x.destaque)[0];return p?`<div class="card widget"><h4>Loja Farol</h4><a href="#produto-${p.id}"><img src="${imgProd(p)}" style="border-radius:10px;aspect-ratio:1;object-fit:cover" alt=""><b style="display:block;margin-top:8px">${esc(p.nome)}</b><span class="price">${brl(priceOf(p))}</span></a></div>`:''};
 const prodCard=p=>{const o=offPct(p);const st=+p.estoque<=0;return`<div class="card prod">${o>0?`<span class="off">-${o}%</span>`:''}<a href="#produto-${p.id}"><img src="${imgProd(p)}" alt="" loading="lazy"></a><div class="in"><span class="small muted">${esc(p.categoria)}</span><a href="#produto-${p.id}"><h3>${esc(p.nome)}</h3></a><div>${o>0?`<span class="old">${brl(p.preco)}</span>`:''}<span class="price">${brl(priceOf(p))}</span></div>${ST().pixDesconto?`<span class="pix-tag">${brl(priceOf(p)*(1-ST().pixDesconto/100))} no PIX</span>`:''}<button class="btn sm" style="margin-top:auto" ${st?'disabled':''} onclick="addCart('${p.id}')">${st?'Esgotado':varsOf(p).length?'Escolher opção':ic('cart')+' Adicionar'}</button></div></div>`};
@@ -1560,7 +1601,7 @@ function admOracoes(){return`<h2>Pedidos de música</h2><div class="grid" style=
 function setForm(title,fields,note=''){const s=ST();return`<h2>${title}</h2>${note}<form class="card form" style="padding:20px" onsubmit="return saveSet(event,${JSON.stringify(fields.map(f=>f.k)).replace(/"/g,"'")})">${fieldsHTML(fields,s)}<div class="fl"><button class="btn">Salvar configurações</button></div></form>`}
 let SETF={};
 async function saveSet(e){e.preventDefault();const fs=SETF[S.adm.tab]||(S.adm.tab==='campanhas'?SETF.contas:null);if(S.adm.tab==='publicidade')renderAdMob();const o=readForm(e.target,fs);try{await DB.saveSettings(o);toast('Configurações salvas');if(S.adm.tab==='aparencia'){LS.set('fr_look2',null);document.documentElement.dataset.layout=o.layout;document.documentElement.dataset.palette=o.paleta}renderAll()}catch(err){toast(err.message)}return false}
-function admRadio(){SETF.radio=[{k:'radioNome',l:'Nome da rádio',w:'w3'},{k:'radioFreq',l:'Frequência / slogan curto',w:'w3'},{k:'streamUrl',l:'URL do streaming de áudio (HTTPS — Shoutcast/Icecast/Zeno etc.)'},{k:'ytChannelId',l:'ID do canal do YouTube (começa com UC...)',w:'w3'},{k:'ytVideoId',l:'ID de uma live específica (opcional)',w:'w3'},{k:'aoVivo',l:'Estamos AO VIVO no YouTube agora (mostra o botão "Assistir")',type:'checkbox'},{k:'programacao',l:'Grade de programação — uma linha por programa: dias|início|fim|programa|apresentador (dias: seg-sex, sab, dom, todos, seg,qua)',type:'textarea',rows:12}];
+function admRadio(){SETF.radio=[{k:'radioNome',l:'Nome da rádio',w:'w3'},{k:'radioFreq',l:'Frequência / slogan curto',w:'w3'},{k:'streamUrl',l:'URL do streaming de áudio (HTTPS — Shoutcast/Icecast/Zeno etc.)'},{k:'ytChannelId',l:'ID do canal do YouTube (começa com UC...)',w:'w3'},{k:'ytVideoId',l:'ID de uma live específica (opcional)',w:'w3'},{k:'aoVivo',l:'Estamos AO VIVO no YouTube agora (mostra o botão "Assistir")',type:'checkbox'},{k:'rdsAtivo',l:'Mostrar a música que está tocando (RDS do streaming)',type:'checkbox',w:'w3'},{k:'radioBarra',l:'Barra da rádio para quem chega ao site',type:'select',opts:()=>[['visivel','Visível (barra completa)'],['minimizada','Recolhida (botão pequeno)']],w:'w3'},{k:'rdsUrl',l:'Endereço do RDS (opcional) — JSON do Icecast/Shoutcast/painel do streaming. Vazio = lê direto do streaming pelo servidor'},{k:'programacao',l:'Grade de programação — uma linha por programa: dias|início|fim|programa|apresentador (dias: seg-sex, sab, dom, todos, seg,qua)',type:'textarea',rows:12}];
  return setForm('Rádio Farol FM & TV',SETF.radio,`<div class="notice" style="margin-bottom:14px">📺 <b>Ao vivo pelo YouTube:</b> informe o ID do canal e ligue a chave “AO VIVO” quando a transmissão começar — o botão <b>Assistir</b> aparece no player, na capa e na página da rádio. ${CFG.API?'Com o backend + chave da YouTube Data API, a detecção é automática a cada 2 minutos.':'No backend incluso a detecção pode ser automática (YouTube Data API).'}</div>`)}
 function admRedes(){SETF.redes=[{k:'ytNome',l:'Nome do canal no YouTube',w:'w3'},{k:'ytHandle',l:'@ do canal',w:'w3'},{k:'ytChannelId',l:'ID do canal (UC...) — usado no “Assistir ao vivo”',w:'w3'},{k:'youtube',l:'Link do canal',w:'w3'},{k:'igUser',l:'Usuário do Instagram (sem @)',w:'w3'},{k:'instagram',l:'Link do Instagram',w:'w3'},{k:'igPosts',l:'Publicações em destaque (opcional) — cole links de posts/reels do Instagram, um por linha. Aparecem incorporados na página TV & Redes.',type:'textarea',rows:4},{k:'redesHome',l:'Mostrar a seção “Farol nas redes” na página inicial',type:'checkbox'}];
  return setForm('Redes sociais',SETF.redes,`<div class="notice" style="margin-bottom:14px">📲 <b>Automático com o servidor:</b> o backend busca sozinho os vídeos mais recentes do canal ${esc(ST().ytHandle||'')}, detecta quando há <b>live</b> (sem precisar de chave) e, com o token do Instagram no <code>.env</code>, mostra as últimas publicações de @${esc(ST().igUser||'')}. ${CFG.API?'':'No modo demonstração, o feed mostra a grade com link para o perfil.'}</div>`)}
