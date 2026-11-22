@@ -106,7 +106,9 @@ def foto(raw):
 def bytes_da_imagem(src):
     if src.startswith('data:image'): return base64.b64decode(src.split(',', 1)[1])
     if src.startswith('http'):
-        with urllib.request.urlopen(urllib.request.Request(src, headers={'User-Agent': 'FarolFM-share/1.0'}), timeout=20) as r: return r.read()
+        with urllib.request.urlopen(urllib.request.Request(src, headers={'User-Agent': 'FarolFM-share/1.0 (https://farolradiotv.com.br)'}), timeout=30) as r: return r.read()
+    if src.startswith('assets/'):
+        with open(os.path.join(SITE, src), 'rb') as f: return f.read()
     return None
 
 
@@ -135,13 +137,14 @@ def main():
         pid = str(p.get('id', ''))
         if not pid or '/' in pid or '..' in pid: continue
         pasta = os.path.join(base, pid); os.makedirs(pasta, exist_ok=True)
-        img_src = str(p.get('imagem') or ''); img = f'{URL}/n/{pid}/capa.jpg'
-        try:
-            raw = bytes_da_imagem(img_src); im = foto(raw) if raw else capa_padrao(p)   # a foto da matéria; sem foto, a capa do site
-        except Exception as ex:
-            print(f'Aviso ({pid}): imagem da matéria indisponível ({ex}); usando a capa padrão')
-            if img_src.startswith('http'): im = None; img = img_src
-            else: im = capa_padrao(p)
+        img = f'{URL}/n/{pid}/capa.jpg'; im = None
+        for src in (str(p.get('imagem') or ''), str(p.get('imagemAlt') or '')):   # a foto da matéria; se falhar, a ilustração reserva
+            if not src: continue
+            try:
+                raw = bytes_da_imagem(src)
+                if raw: im = foto(raw); break
+            except Exception as ex: print(f'Aviso ({pid}): imagem indisponível {src[:60]}… ({ex})')
+        if im is None: im = capa_padrao(p)
         if im: im.save(os.path.join(pasta, 'capa.jpg'), quality=86, optimize=True)
         with open(os.path.join(pasta, 'index.html'), 'w', encoding='utf-8') as f: f.write(pagina(p, img))
         n += 1

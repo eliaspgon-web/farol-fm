@@ -2,7 +2,7 @@
  "posts": [
   {
    "tags": "igreja perseguida, oração, Portas Abertas",
-   "legenda": "",
+   "legenda": "“Mãos em oração”, de Albrecht Dürer. Foto: Albrecht Dürer (domínio público) / Wikimedia Commons",
    "fonte": "Portas Abertas Brasil",
    "id": "n1",
    "categoria": "Missões",
@@ -17,11 +17,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 640
+   "views": 640,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Praying_Hands_-_Albrecht_Durer.png?width=1280",
+   "imagemAlt": "assets/noticias/n1.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Praying_Hands_-_Albrecht_Durer.png"
   },
   {
    "tags": "perseguição, Europa, liberdade religiosa",
-   "legenda": "",
+   "legenda": "Basílica de Notre-Dame de Fourvière, em Lyon (França). Foto: Chris 73 / Wikimedia Commons (CC BY-SA 3.0)",
    "fonte": "Folha Gospel",
    "id": "n2",
    "categoria": "Sociedade",
@@ -36,11 +39,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 590
+   "views": 590,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Lyon_-_Basilika_Notre-Dame_de_Fourvi%C3%A8re_at_night.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n2.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Lyon_-_Basilika_Notre-Dame_de_Fourvi%C3%A8re_at_night.jpg"
   },
   {
    "tags": "Dunamis, juventude, Portas Abertas",
-   "legenda": "",
+   "legenda": "Público e luzes de palco em um show (imagem ilustrativa). Foto: Wikimedia Commons",
    "fonte": "Portas Abertas Brasil",
    "id": "n3",
    "categoria": "Eventos",
@@ -55,11 +61,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 410
+   "views": 410,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Pretty_Lights_at_the_Aragon_Ballroom_-_8_November_2013_-_Light_show.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n3.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Pretty_Lights_at_the_Aragon_Ballroom_-_8_November_2013_-_Light_show.jpg"
   },
   {
    "tags": "futebol, testemunho, liberdade religiosa",
-   "legenda": "",
+   "legenda": "Estádio do Borussia Dortmund, na Alemanha. Foto: RaBoe / Wikimedia Commons",
    "fonte": "Folha Gospel",
    "id": "n4",
    "categoria": "Sociedade",
@@ -74,11 +83,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 520
+   "views": 520,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Signal_Iduna_Park_2013_by-RaBoe_06.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n4.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Signal_Iduna_Park_2013_by-RaBoe_06.jpg"
   },
   {
    "tags": "México, crianças, educação",
-   "legenda": "",
+   "legenda": "Sala de aula (imagem ilustrativa). Foto: woodleywonderworks / Wikimedia Commons (CC BY 2.0)",
    "fonte": "Portas Abertas Brasil",
    "id": "n5",
    "categoria": "Missões",
@@ -93,11 +105,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 380
+   "views": 380,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/School-education-learning-1750587-h.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n5.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:School-education-learning-1750587-h.jpg"
   },
   {
    "tags": "Gabriela Rocha, Thalles Roberto, louvor",
-   "legenda": "",
+   "legenda": "Violão (imagem ilustrativa). Foto: Wikimedia Commons",
    "fonte": "Fuxico Gospel",
    "id": "n6",
    "categoria": "Música Gospel",
@@ -112,11 +127,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 560
+   "views": 560,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Accordare_chitarra.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n6.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Accordare_chitarra.jpg"
   },
   {
    "tags": "África, petição, igreja perseguida",
-   "legenda": "",
+   "legenda": "Abrigos improvisados em acampamento de deslocados na África (imagem ilustrativa). Foto: Wikimedia Commons",
    "fonte": "Portas Abertas Brasil",
    "id": "n7",
    "categoria": "Mundo Cristão",
@@ -131,11 +149,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 470
+   "views": 470,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Darfur_IDPs_1_camp.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n7.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Darfur_IDPs_1_camp.jpg"
   },
   {
    "tags": "Iêmen, oração, igreja perseguida",
-   "legenda": "",
+   "legenda": "Vista da cidade de Taiz, no Iêmen. Foto: Wikimedia Commons",
    "fonte": "Portas Abertas Brasil",
    "id": "n8",
    "categoria": "Mundo Cristão",
@@ -150,11 +171,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 350
+   "views": 350,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Taiz_city_from_AlQahirah_Castle.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n8.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Taiz_city_from_AlQahirah_Castle.jpg"
   },
   {
    "tags": "Oficina G3, rock cristão, shows",
-   "legenda": "",
+   "legenda": "Banda no palco durante show (imagem ilustrativa). Foto: Wikimedia Commons",
    "fonte": "Folha Gospel",
    "id": "n9",
    "categoria": "Música Gospel",
@@ -169,11 +193,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 610
+   "views": 610,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Band_performs_live_on_stage_with_bright_lights_at_music_festival_in_summer.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n9.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Band_performs_live_on_stage_with_bright_lights_at_music_festival_in_summer.jpg"
   },
   {
    "tags": "Nigéria, oração, igreja perseguida",
-   "legenda": "",
+   "legenda": "Vela acesa (imagem ilustrativa). Foto: PetarM / Wikimedia Commons",
    "fonte": "Portas Abertas Brasil",
    "id": "n10",
    "categoria": "Mundo Cristão",
@@ -188,11 +215,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 700
+   "views": 700,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Candle_%28Slava_celebration%29.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n10.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Candle_%28Slava_celebration%29.jpg"
   },
   {
    "tags": "Burkina Faso, educação, igreja perseguida",
-   "legenda": "",
+   "legenda": "Escola primária em Dourtenga, Burkina Faso. Foto: KKB / Wikimedia Commons",
    "fonte": "Portas Abertas Brasil",
    "id": "n11",
    "categoria": "Missões",
@@ -207,11 +237,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 330
+   "views": 330,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Dourtenga_school.JPG?width=1280",
+   "imagemAlt": "assets/noticias/n11.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Dourtenga_school.JPG"
   },
   {
    "tags": "Eli Soares, Grammy Latino, música cristã",
-   "legenda": "",
+   "legenda": "MGM Grand, em Las Vegas, onde fica a arena da premiação. Foto: Wikimedia Commons (CC BY-SA 1.0)",
    "fonte": "Folha Gospel",
    "id": "n12",
    "categoria": "Música Gospel",
@@ -226,11 +259,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 450
+   "views": 450,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/LasVegas-MGMgrand.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n12.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:LasVegas-MGMgrand.jpg"
   },
   {
    "tags": "Luiza Possi, testemunho, louvor",
-   "legenda": "",
+   "legenda": "Sala São Paulo. Foto: Júlio Boaro / Wikimedia Commons",
    "fonte": "Folha Gospel",
    "id": "n13",
    "categoria": "Música Gospel",
@@ -245,11 +281,14 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 300
+   "views": 300,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/Sala_SP.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n13.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:Sala_SP.jpg"
   },
   {
    "tags": "Cassiane, recorde, música gospel",
-   "legenda": "",
+   "legenda": "Disco de vinil (imagem ilustrativa). Foto: Evan-Amos / Wikimedia Commons",
    "fonte": "Folha Gospel",
    "id": "n14",
    "categoria": "Música Gospel",
@@ -264,7 +303,10 @@
    "tipo": "Notícia",
    "status": "publicado",
    "autor": "Redação Farol",
-   "views": 280
+   "views": 280,
+   "imagem": "https://commons.wikimedia.org/wiki/Special:FilePath/12in-Vinyl-LP-Record-Angle.jpg?width=1280",
+   "imagemAlt": "assets/noticias/n14.jpg",
+   "creditoUrl": "https://commons.wikimedia.org/wiki/File:12in-Vinyl-LP-Record-Angle.jpg"
   }
  ],
  "videos": [
