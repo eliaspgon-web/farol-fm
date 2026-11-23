@@ -68,7 +68,7 @@ const pubDe = (u) => papelOk(u.papel) === 'admin' || (u.publicar ?? (PERFIS[pape
 const COL_MOD = { posts: ['posts'], videos: ['videos'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque'], cupons: ['cupons'], promocoes: ['promocoes'], pedidos: ['pedidos'], conversas: ['atendimento'], anuncios: ['publicidade'], comentarios: ['comentarios'] };
 // configurações → módulo que pode alterá-las (quem tem "aparencia" altera todas)
 const SETTINGS_MOD = {
-  radio: ['rdsAtivo', 'rdsUrl', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'aoVivo', 'programacao'],
+  radio: ['rdsAtivo', 'rdsUrl', 'radioAuto', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'aoVivo', 'programacao'],
   redes: ['ytChannelId', 'ytNome', 'ytHandle', 'youtube', 'igUser', 'instagram', 'igPosts', 'redesHome'],
   redacao: ['versiculos', 'categorias', 'carrosselQtd'],
   pagamentos: ['pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja'],
