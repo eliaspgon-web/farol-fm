@@ -70,9 +70,9 @@ const COL_MOD = { posts: ['posts'], videos: ['videos'], oracoes: ['oracoes'], mu
 const SETTINGS_MOD = {
   radio: ['rdsAtivo', 'rdsUrl', 'radioAuto', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'aoVivo', 'programacao'],
   redes: ['ytChannelId', 'ytNome', 'ytHandle', 'youtube', 'igUser', 'instagram', 'igPosts', 'redesHome'],
-  redacao: ['versiculos', 'categorias', 'carrosselQtd'],
+  redacao: ['versiculos', 'versiculosAgenda', 'categorias', 'carrosselQtd'],
   pagamentos: ['pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja'],
-  publicidade: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'adOculto', 'gaId', 'adsenseAuto', 'adsenseModo', 'gscVerify', 'cookiesAviso', ...['topo', 'home1', 'home2', 'lateral1', 'lateral2', 'materia2', 'loja', 'radio', 'rodape', 'mobile'].map((k) => 'adOff_' + k)],
+  publicidade: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'adOculto', 'comprovanteAuto', 'gaId', 'adsenseAuto', 'adsenseModo', 'gscVerify', 'cookiesAviso', ...['topo', 'home1', 'home2', 'lateral1', 'lateral2', 'materia2', 'loja', 'radio', 'rodape', 'mobile'].map((k) => 'adOff_' + k)],
   campanhas: ['googleClientId', 'cupomBoasVindas', 'politicaPrivacidade'],
   comentarios: ['comentariosAtivo', 'comentariosModeracao', 'comentariosLogin', 'palavrasBloqueadas'],
   atendimento: ['waVendas', 'horarioAtendimento', 'botNome'],
@@ -104,7 +104,7 @@ if (q.count.get().n === 0) {
 const uid = () => Date.now().toString(36) + crypto.randomBytes(3).toString('hex');
 const r2 = (v) => Math.round((+v || 0) * 100) / 100;
 const now = () => new Date().toISOString();
-const inRange = (i, f) => { const n = Date.now(); return (!i || Date.parse(i) <= n) && (!f || Date.parse(f) + 864e5 > n); };
+const inRange = (i, f) => { const n = Date.now(); return (!i || Date.parse(i) <= n) && (!f || (String(f).includes('T') ? Date.parse(f) : Date.parse(f) + 864e5) > n); };
 const PRIVATE_SETTINGS = ['taxaPix', 'taxaCredito', 'taxaDebito', 'senhaAdmin'];
 const publicSettings = () => { const s = { ...settings() }; PRIVATE_SETTINGS.forEach((k) => delete s[k]); delete s.id; return s; };
 
@@ -236,7 +236,7 @@ app.get('/api/bootstrap', (req, res) => {
     videos: all('videos'),
     produtos: all('produtos').filter((p) => p.ativo),
     promocoes: all('promocoes').filter((c) => c.ativo && inRange(c.inicio, c.fim)),
-    anuncios: all('anuncios').filter((a) => a.ativo && inRange(a.inicio, a.fim)).map(({ views, clicks, ...a }) => a),
+    anuncios: all('anuncios').filter((a) => a.ativo && inRange(a.inicio, a.fim)).map(({ views, clicks, comprovantes, diario, ...a }) => a),
     cupons: [], pedidos: [], oracoes: [], musicas: [], conversas: [], comentarios: [],
     settings: publicSettings(),
   });
@@ -256,7 +256,10 @@ app.post('/api/ads/:id/:ev', limit(120), (req, res) => {
 });
 setInterval(() => {
   if (!adBuf.size) return; const batch = [...adBuf]; adBuf.clear();
-  db.transaction(() => { for (const [k, n] of batch) { const [id, ev] = k.split('|'); const a = get('anuncios', id); if (a) { a[ev === 'view' ? 'views' : 'clicks'] = (+a[ev === 'view' ? 'views' : 'clicks'] || 0) + n; put('anuncios', a); } } })();
+  const dia = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Maceio' }); // AAAA-MM-DD no horário de Maceió
+  db.transaction(() => { for (const [k, n] of batch) { const [id, ev] = k.split('|'); const a = get('anuncios', id); if (a) { a[ev === 'view' ? 'views' : 'clicks'] = (+a[ev === 'view' ? 'views' : 'clicks'] || 0) + n;
+    a.diario = a.diario || {}; const d = (a.diario[dia] = a.diario[dia] || { v: 0, c: 0 }); d[ev === 'view' ? 'v' : 'c'] += n; const ks = Object.keys(a.diario).sort(); while (ks.length > 120) delete a.diario[ks.shift()];
+    put('anuncios', a); } } })();
 }, 30e3);
 /* comentários dos leitores no fim das notícias */
 const PALAVRAS_PADRAO = 'idiota, imbecil, burro, otario, babaca, porra, caralho, merda, puta, viado, desgraçado, vagabundo';
@@ -873,7 +876,7 @@ app.get('/api/nowplaying', async (req, res) => {
 });
 
 /* ------------------------------------------------ REDES: YouTube + Instagram */
-const social = { yt: [], ytAt: 0, ig: [], igAt: 0 };
+const social = { yt: [], ytAt: 0, ig: [], igAt: 0, igErr: '' };
 const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; FarolFM/1.0)', 'Accept-Language': 'pt-BR' };
 const decode = (t) => String(t || '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 
@@ -917,10 +920,19 @@ async function refreshInstagram() {
     const r = await fetch(`https://graph.instagram.com/v21.0/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&limit=12&access_token=${encodeURIComponent(token)}`);
     const j = await r.json(); if (j.error) throw new Error(j.error.message);
     social.ig = (j.data || []).map(({ id, caption, media_type, media_url, thumbnail_url, permalink, timestamp }) => ({ id, caption, media_type, media_url, thumbnail_url, permalink, timestamp }));
-    social.igAt = Date.now();
-  } catch (e) { console.error('Instagram:', e.message); }
+    social.igAt = Date.now(); social.igErr = '';
+  } catch (e) { social.igErr = e.message; social.igAt = Date.now(); console.error('Instagram:', e.message); }
 }
 // O token de longa duração vale 60 dias: renovamos a cada 7 dias e guardamos no banco
+// painel › Redes sociais: conectar o Instagram colando o token (fica só no servidor, nunca vai para o site)
+app.get('/api/admin/instagram', auth('redes'), (req, res) => res.json({ conectado: !!igToken(), origem: get('secrets', 'ig') ? 'painel' : (process.env.IG_ACCESS_TOKEN ? 'servidor' : ''), posts: social.ig.length, atualizado: social.igAt || null, erro: social.igErr || '' }));
+app.put('/api/admin/instagram', auth('redes'), ok(async (req, res) => {
+  const t = String((req.body || {}).token || '').trim();
+  if (!t) { q.del.run('secrets', 'ig'); social.ig = []; social.igErr = ''; return res.json({ ok: true, conectado: !!igToken() }); }
+  put('secrets', { id: 'ig', token: t, renewed: Date.now() }); social.igAt = 0; await refreshInstagram();
+  if (social.igErr) { q.del.run('secrets', 'ig'); return res.status(400).json({ error: 'O Instagram recusou o token: ' + social.igErr }); }
+  res.json({ ok: true, posts: social.ig.length });
+}));
 async function renewInstagramToken() {
   const token = igToken(); if (!token) return;
   const meta = get('secrets', 'ig') || {}; if (meta.renewed && Date.now() - meta.renewed < 7 * 864e5) return;

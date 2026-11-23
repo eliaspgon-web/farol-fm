@@ -37,7 +37,11 @@ def carregar():
                     posts[p['id']] = p
         except Exception as ex:
             print('Aviso: não foi possível ler as notícias do servidor:', ex)
-    pub = lambda p: p.get('status') == 'publicado' if p.get('status') else not p.get('rascunho')
+    agora = datetime.now(timezone.utc)
+    def no_ar(p):
+        try: return datetime.fromisoformat(str(p.get('data', '')).replace('Z', '+00:00')) <= agora
+        except Exception: return True
+    pub = lambda p: (p.get('status') == 'publicado' if p.get('status') else not p.get('rascunho')) and no_ar(p)   # agendadas só depois da hora
     return [p for p in posts.values() if pub(p)]
 
 
