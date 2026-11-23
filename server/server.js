@@ -62,8 +62,10 @@ const PERFIS = {
   financeiro: { m: ['dash', 'financeiro', 'pedidos', 'clientes'], pub: false },
 };
 const papelOk = (p) => (p === 'redacao' ? 'editor' : p === 'loja' ? 'gerente' : p);
-const modsDe = (u) => { const p = papelOk(u.papel); if (p === 'admin') return TODOS_MODULOS; return Array.isArray(u.modulos) && u.modulos.length ? u.modulos.filter((m) => TODOS_MODULOS.includes(m)) : (PERFIS[p] || { m: [] }).m; };
-const pubDe = (u) => papelOk(u.papel) === 'admin' || (u.publicar ?? (PERFIS[papelOk(u.papel)] || {}).pub) === true;
+// uma pessoa pode ter vários perfis (papeis): vê a soma dos módulos de todos eles
+const papeisDe = (u) => { const l = (Array.isArray(u.papeis) && u.papeis.length ? u.papeis : [u.papel]).map(papelOk).filter((p) => PERFIS[p]); return l.length ? [...new Set(l)] : ['vendedor']; };
+const modsDe = (u) => { const ps = papeisDe(u); if (ps.includes('admin')) return TODOS_MODULOS; return Array.isArray(u.modulos) && u.modulos.length ? u.modulos.filter((m) => TODOS_MODULOS.includes(m)) : [...new Set(ps.flatMap((p) => PERFIS[p].m))]; };
+const pubDe = (u) => papeisDe(u).includes('admin') || (u.publicar ?? papeisDe(u).some((p) => PERFIS[p].pub)) === true;
 // coleção → módulos que podem alterá-la
 const COL_MOD = { posts: ['posts'], videos: ['videos'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque'], cupons: ['cupons'], promocoes: ['promocoes'], pedidos: ['pedidos'], conversas: ['atendimento'], anuncios: ['publicidade'], comentarios: ['comentarios'] };
 // configurações → módulo que pode alterá-las (quem tem "aparencia" altera todas)
@@ -223,7 +225,7 @@ const auth = (mods) => (req, res, next) => {
   let t; try { t = jwt.verify(String(req.headers.authorization || '').replace('Bearer ', ''), JWT_SECRET); }
   catch { return res.status(401).json({ error: 'Sessão expirada. Entre novamente.' }); }
   // relê o usuário a cada pedido: alterações de perfil ou desativação valem na hora
-  if (t.id && t.id !== 'root') { const u = get('usuarios', t.id); if (!u || u.ativo === false) return res.status(401).json({ error: 'Acesso desativado. Fale com o administrador.' }); req.user = { id: u.id, sub: u.email, nome: u.nome, papel: u.papel, modulos: u.modulos, publicar: u.publicar }; }
+  if (t.id && t.id !== 'root') { const u = get('usuarios', t.id); if (!u || u.ativo === false) return res.status(401).json({ error: 'Acesso desativado. Fale com o administrador.' }); req.user = { id: u.id, sub: u.email, nome: u.nome, papel: u.papel, modulos: u.modulos, publicar: u.publicar, papeis: u.papeis }; }
   else req.user = { id: 'root', sub: t.sub, nome: t.nome || 'Administrador', papel: t.papel || 'admin' };
   if (mods === 'admin' ? papelOk(req.user.papel) !== 'admin' : (mods && !can(req.user, mods))) return res.status(403).json({ error: 'Seu perfil não tem acesso a esta área.' });
   next();
@@ -397,7 +399,8 @@ app.put('/api/admin/me', auth(), ok(async (req, res) => {
 }));
 app.put('/api/admin/usuarios/:id', auth('admin'), ok(async (req, res) => {
   const b = req.body || {}; const old = get('usuarios', req.params.id) || {};
-  const papel = papelOk(b.papel); if (!PERFIS[papel]) throw new Error('Perfil inválido');
+  const papeis = [...new Set((Array.isArray(b.papeis) && b.papeis.length ? b.papeis : [b.papel]).map(papelOk))]; if (!papeis.length || papeis.some((p) => !PERFIS[p])) throw new Error('Perfil inválido');
+  const papel = papeis.includes('admin') ? 'admin' : papeis[0];
   const email = String(b.email || '').toLowerCase().trim(); if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) throw new Error('E-mail inválido');
   if (String(b.nome || '').trim().length < 3) throw new Error('Informe o nome completo');
   if (email === ADMIN_EMAIL.toLowerCase()) throw new Error('Este e-mail é do administrador principal (.env)');
@@ -406,8 +409,8 @@ app.put('/api/admin/usuarios/:id', auth('admin'), ok(async (req, res) => {
   if (!old.hash && !sen) throw new Error('Defina uma senha inicial');
   if (all('usuarios').some((u) => u.email.toLowerCase() === email && u.id !== req.params.id)) throw new Error('E-mail já cadastrado');
   if (req.params.id === req.user.id && b.ativo === false) throw new Error('Você não pode desativar o próprio acesso');
-  const u = put('usuarios', { ...old, id: req.params.id, nome: String(b.nome).trim().slice(0, 80), email, tel: String(b.tel || '').slice(0, 20), cargo: String(b.cargo || '').slice(0, 60), papel,
-    modulos: Array.isArray(b.modulos) ? b.modulos.filter((m) => TODOS_MODULOS.includes(m)) : [], publicar: b.publicar === undefined ? PERFIS[papel].pub : !!b.publicar, ativo: b.ativo !== false,
+  const u = put('usuarios', { ...old, id: req.params.id, nome: String(b.nome).trim().slice(0, 80), email, tel: String(b.tel || '').slice(0, 20), cargo: String(b.cargo || '').slice(0, 60), papel, papeis,
+    modulos: Array.isArray(b.modulos) ? b.modulos.filter((m) => TODOS_MODULOS.includes(m)) : [], publicar: b.publicar === undefined ? papeis.some((p) => PERFIS[p].pub) : !!b.publicar, ativo: b.ativo !== false,
     hash: sen ? await bcrypt.hash(sen, 10) : old.hash, criado: old.criado || now() });
   res.json(userPub(u));
 }));
