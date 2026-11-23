@@ -4,9 +4,9 @@ on:
     branches: [main]
     paths: ['site/**', 'scripts/**', 'server/seed.json', '.github/workflows/pages.yml']
   workflow_dispatch:
-  # atualiza a cada hora as prévias de compartilhamento das notícias novas publicadas no servidor
+  # atualiza a cada 20 minutos as prévias de compartilhamento das notícias novas publicadas no servidor
   schedule:
-    - cron: '17 * * * *'
+    - cron: '7,27,47 * * * *'
 permissions:
   contents: read
   pages: write

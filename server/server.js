@@ -448,6 +448,7 @@ app.put('/api/admin/:col/:id', auth(), (req, res) => {
   }
   if (col === 'posts' && !doc.autorId) doc.autorId = req.user.id;
   if (col === 'anuncios') { const old = get('anuncios', id) || {}; doc.views = +old.views || 0; doc.clicks = +old.clicks || 0; }
+  if (col === 'posts' && doc.status === 'publicado') atualizarPrevias();
   res.json(put(col, doc));
 });
 app.delete('/api/admin/:col/:id', auth(), (req, res) => {
@@ -818,7 +819,7 @@ app.get(['/n/:id', '/n/:id/'], (req, res, next) => {
   const base = `${req.protocol}://${req.get('host')}`; const E = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const temCapa = /^data:image\//.test(p.imagem || '') || fs.existsSync(path.join(SITE_DIR, 'n', p.id, 'capa.jpg'));
   const img = /^https?:/.test(p.imagem || '') ? p.imagem : temCapa ? `${base}/n/${encodeURIComponent(p.id)}/capa.jpg` : `${base}/assets/og-farol.jpg`;
-  const t = p.titulo || 'Farol FM'; const r = p.resumo || String(p.corpo || '').slice(0, 180); const alvo = `/#post-${encodeURIComponent(p.id)}`;
+  const t = p.titulo || 'Farol FM'; const r = p.resumo || String(p.corpo || '').slice(0, 180); const site = (process.env.SITE_URL || (/^https?:/.test(SITE_ORIGIN) ? SITE_ORIGIN.split(',')[0] : '')).trim().replace(/\/$/, ''); const alvo = `${site}/#post-${encodeURIComponent(p.id)}`;
   res.type('html').send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>${E(t)} — Farol FM</title><meta name="description" content="${E(r)}">
 <meta property="og:site_name" content="Farol FM"><meta property="og:locale" content="pt_BR"><meta property="og:type" content="article"><meta property="og:title" content="${E(t)}"><meta property="og:description" content="${E(r)}">
 <meta property="og:url" content="${base}/n/${E(p.id)}/"><meta property="og:image" content="${E(img)}"><meta property="og:image:alt" content="${E(t)}"><meta property="article:published_time" content="${E(p.data)}">
@@ -827,6 +828,21 @@ app.get(['/n/:id', '/n/:id/'], (req, res, next) => {
 });
 app.use(express.static(SITE_DIR));
 
+
+/* ------------------------------------------------ prévias no site: pede ao GitHub para gerar a página /n/<id>/ */
+// Com GH_TOKEN (token do GitHub com permissão "Actions: read and write" no repositório), cada matéria publicada
+// dispara a publicação do site em ~1 minuto, em vez de esperar a rodada de hora em hora.
+let previasTimer = null;
+function atualizarPrevias() {
+  const token = process.env.GH_TOKEN; if (!token) return;
+  clearTimeout(previasTimer);
+  previasTimer = setTimeout(() => {
+    fetch(`https://api.github.com/repos/${process.env.GH_REPO || 'eliaspgon-web/farol-fm'}/actions/workflows/pages.yml/dispatches`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'User-Agent': 'farol-fm' },
+      body: JSON.stringify({ ref: 'main' }),
+    }).then((r) => { if (!r.ok) console.warn('Prévias: GitHub respondeu', r.status); }).catch((e) => console.warn('Prévias:', e.message));
+  }, 20000);
+}
 
 /* ------------------------------------------------ RDS: música tocando agora */
 // Lê o título do próprio streaming (metadados ICY do Shoutcast/Icecast) ou de um JSON do painel do streaming.
