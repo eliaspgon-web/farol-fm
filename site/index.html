@@ -546,6 +546,8 @@ html.captura #wa-fab,html.captura #wa,html.captura #ckbar,html.captura #toast,ht
 html.sem-loja a[href="#loja"]:not(.ad-k),html.sem-loja a[href="#carrinho"],html.sem-loja .cartbtn,html.sem-loja .shopstrip,html.sem-loja .shop-banner,html.sem-loja .gl-shop{display:none!important}
 .loja-sw{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px;margin-bottom:18px;border-left:6px solid var(--ok,#16a34a)}.loja-sw.off{border-left-color:#9CA3AF;background:color-mix(in srgb,#9CA3AF 10%,var(--surf))}.loja-sw b{font-size:18px}
 .btn-sair{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;border-radius:99px;padding:7px 14px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;transition:background .2s,transform .2s}.btn-sair:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}.btn-sair .icon{width:16px;height:16px}.adm-sair{margin:14px 10px 4px;color:#B91C1C!important;font-weight:700}
+.pw-wrap{position:relative;display:block;width:100%}.pw-wrap>input{width:100%;padding-right:46px!important;box-sizing:border-box}.pw-olho{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:6px 8px;border-radius:8px;opacity:.75}.pw-olho:hover{opacity:1;background:color-mix(in srgb,var(--pri) 10%,transparent)}
+#modal .box.treme{animation:treme .32s}@keyframes treme{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 .hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
 .com-av{flex:0 0 40px;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;background:var(--pri);overflow:hidden}.com-av.eq{background:#fff;border:1px solid var(--line)}.com-av img{width:86%;height:86%;object-fit:contain}
 .com-list{margin-top:6px}.com{display:flex;gap:12px;padding:16px 0;border-top:1px solid var(--line)}.com-list>.com:first-child{border-top:0}.com>.grow{min-width:0}
@@ -900,7 +902,7 @@ html[data-tema="escuro"] .chip{color:#FFB57A}html[data-tema="escuro"] .gb-lk+.gb
 <div class="tabsbar" id="tabsbar"></div>
 <div id="drawer"></div>
 <button id="modelos-fab" onclick="openModelos()" aria-label="Modelos de layout">🎨 <span>Modelos</span></button>
-<div id="modal" onclick="if(event.target===this)closeModal()"><div class="box"><button class="x" onclick="closeModal()">×</button><div id="mbody"></div></div></div>
+<div id="modal" onclick="if(event.target===this)modalFora()"><div class="box"><button class="x" onclick="closeModal()">×</button><div id="mbody"></div></div></div>
 <div id="toast"></div>
 <audio id="aud" preload="none"></audio>
 
@@ -953,6 +955,14 @@ const fdt=d=>{try{return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}};
 function toast(m){const d=document.createElement('div');d.textContent=m;$('#toast').appendChild(d);setTimeout(()=>d.remove(),3200)}
 function openModal(h){$('#mbody').innerHTML=h;$('#modal').classList.add('on')}
+/* janelas com formulário (cadastro, edição…) não fecham ao clicar fora nem com Esc: só pelo × ou Cancelar */
+const modalTemForm=()=>!!document.querySelector('#mbody form input:not([type=hidden]),#mbody form textarea,#mbody form select');
+function modalFora(){if(modalTemForm()){const b=document.querySelector('#modal .box');if(b){b.classList.remove('treme');void b.offsetWidth;b.classList.add('treme')}return}closeModal()}
+/* 👁 mostrar/ocultar senha em todos os campos de senha */
+function olhoSenha(root){(root||document).querySelectorAll('input[type=password]:not([data-olho])').forEach(i=>{i.dataset.olho=1;const w=document.createElement('span');w.className='pw-wrap';i.parentNode.insertBefore(w,i);w.appendChild(i);
+ const b=document.createElement('button');b.type='button';b.className='pw-olho';b.setAttribute('aria-label','Mostrar senha');b.title='Mostrar senha';b.textContent='👁';
+ b.onclick=()=>{const v=i.type==='password';i.type=v?'text':'password';b.textContent=v?'🙈':'👁';b.setAttribute('aria-label',v?'Ocultar senha':'Mostrar senha');b.title=v?'Ocultar senha':'Mostrar senha';i.focus()};w.appendChild(b)})}
+new MutationObserver(()=>olhoSenha()).observe(document.documentElement,{childList:true,subtree:true});
 function closeModal(){$('#modal').classList.remove('on');$('#mbody').innerHTML=''}
 async function copyTxt(t){try{await navigator.clipboard.writeText(t);toast('Copiado!')}catch(e){toast('Selecione e copie manualmente')}}
 
@@ -1138,7 +1148,7 @@ function openDrawer(){const s=ST();const g=noAr();const cur=curRoute;const dl=(h
  <div class="soc">${social()}</div></aside>`;
  requestAnimationFrame(()=>$('#drawer').classList.add('on'))}
 function closeDrawer(){$('#drawer').classList.remove('on')}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();closeModal()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();if($('#modal').classList.contains('on'))modalFora()}});
 function navLinks(cur){return[`<a href="#inicio" class="${cur==='inicio'?'on':''}">Início</a>`,...cats().slice(0,6).map(c=>`<a href="#cat-${slug(c)}" class="${cur==='cat-'+slug(c)?'on':''}">${esc(c)}</a>`),`<a href="#redes" class="${cur==='redes'||cur==='videos'?'on':''}">TV & Redes</a>`,`<a href="#colunas" class="${cur==='colunas'?'on':''}">Colunas</a>`,`<a href="#radio" class="${cur==='radio'?'on':''}">Rádio</a>`,lojaOn()?`<a href="#loja" class="shop ${cur==='loja'?'on':''}">Loja</a>`:''].join('')}
 function social(){const s=ST();return`<a href="${esc(s.instagram)}" target="_blank" rel="noopener" aria-label="Instagram">${ic('ig')}</a><a href="${esc(s.facebook)}" target="_blank" rel="noopener" aria-label="Facebook">${ic('fb')}</a><a href="${esc(s.x)}" target="_blank" rel="noopener" aria-label="X">${ic('x')}</a><a href="https://wa.me/${esc(s.whatsapp)}" target="_blank" rel="noopener" aria-label="WhatsApp">${ic('wa')}</a><a href="${esc(s.youtube)}" target="_blank" rel="noopener" aria-label="YouTube">${ic('yt')}</a>`}
 const hoje=()=>new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
