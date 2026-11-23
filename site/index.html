@@ -893,6 +893,38 @@ html[data-tema="escuro"] .gb-nav{background:var(--surf);border-color:var(--line)
 html[data-tema="escuro"] .gl-c2,html[data-tema="escuro"] .gl-c3{border-color:var(--line)}
 html[data-tema="escuro"] .gl-radio{background:var(--surf);border-color:var(--line)}
 html[data-tema="escuro"] .chip{color:#FFB57A}html[data-tema="escuro"] .gb-lk+.gb-lk{border-color:var(--line)}html[data-tema="escuro"] .gb-nav{background:var(--surf);border-color:var(--line)}
+
+body.adm-mode #ckbar{display:none}
+/* ---------- painel no celular: menu em faixa deslizante, topo enxuto, tabelas viram cartões ---------- */
+@media (max-width:960px){
+ .adm{margin-top:12px;gap:14px}
+ .adm-nav{position:sticky;top:58px;z-index:20;padding:6px;gap:6px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;border-radius:14px}
+ .adm-nav::-webkit-scrollbar{display:none}
+ .adm-nav .adm-g{display:none}
+ .adm-nav button{flex:0 0 auto;padding:8px 12px;font-size:13px;border-radius:999px;scroll-snap-align:start;background:color-mix(in srgb,var(--mut) 8%,transparent)}
+ .adm-nav .adm-sair{display:none}
+}
+@media (max-width:640px){
+ .adm-h .gh-right a.small{display:none}
+ .adm-h .gh-right{gap:6px}.adm-h .btn-sair span{display:none}.adm-h .btn-sair{padding:0 10px}
+ .adm-h .wm{height:18px!important}.adm-h .adm-tag{font-size:9px;padding:2px 6px}
+ .adm section>h2,.adm section h2:first-child{font-size:22px}
+ .adm .notice>.grow,.loja-sw>.grow{flex:1 1 220px}
+ .adm .notice>.btn,.loja-sw>.btn{flex:1 1 100%;justify-content:center}
+ .adm .card:has(>table.t),.adm .card:has(>.tw>table.t){background:transparent;border:0;box-shadow:none;padding:0;overflow:visible}
+ .adm table.t,.adm table.t tbody{display:block;width:100%}
+ .adm table.t thead{display:none}
+ .adm table.t tr{display:block;background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:10px 14px;margin:0 0 10px;box-shadow:var(--sh,0 1px 2px rgba(0,0,0,.04))}
+ .adm table.t td{display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;padding:6px 0;text-align:right;min-width:0;word-break:break-word}
+ .adm table.t td::before{content:attr(data-l);flex:0 0 auto;max-width:45%;text-align:left;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+ .adm table.t td[data-l=""]::before{display:none}
+ .adm table.t td.longo{display:block;text-align:left}.adm table.t td.longo::before{display:block;max-width:none;margin-bottom:2px}
+ .adm table.t td:first-child{display:block;text-align:left;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+ .adm table.t td:first-child::before{display:none}
+ .adm table.t td:last-child:not(:first-child){justify-content:flex-end;flex-wrap:wrap}
+ .adm table.t td .row{flex-wrap:wrap;justify-content:flex-end}
+ .adm table.t td[colspan]{display:block;text-align:center}.adm table.t td[colspan]::before{display:none}
+}
 </style>
 </head>
 <body>
@@ -2021,7 +2053,12 @@ function admPag(){SETF.pagamentos=[{k:'pixChave',l:'Chave PIX (CNPJ, e-mail, tel
  return setForm('Pagamentos & frete',SETF.pagamentos,`<div class="notice" style="margin-bottom:14px">💳 <b>Como funciona:</b> no modo demonstração o PIX já gera um QR Code/copia e cola <b>real</b> com sua chave (baixa manual no painel). Com o backend + Mercado Pago, PIX tem confirmação automática e crédito/débito são cobrados de verdade, com os dados do cartão tokenizados pelo Mercado Pago.</div>`)}
 function admAparencia(){SETF.aparencia=[{k:'nome',l:'Nome do portal',w:'w3'},{k:'slogan',l:'Slogan',w:'w3'},{k:'layout',l:'Modelo de layout padrão',type:'select',opts:()=>LAYOUTS.map(x=>[x[0],x[1]]),w:'w3'},{k:'cabecalho',l:'Estilo do Modelo 1 (cabeçalho e grade)',type:'select',opts:()=>[['a','A — Faixa Farol'],['b','B — Farol Noturno'],['c','C — Farol Cartões']],w:'w3'},{k:'paleta',l:'Paleta padrão',type:'select',opts:()=>PALETAS.map(x=>[x[0],x[1]]),w:'w3'},{k:'carrosselQtd',l:'Notícias no carrossel principal (1 a 10)',type:'number',w:'w3'},{k:'categorias',l:'Editorias (separadas por vírgula)'},{k:'catLoja',l:'Categorias da loja (separadas por vírgula)'},{k:'versiculos',l:'Versículos do dia — um por linha: texto|referência',type:'textarea',rows:6},{k:'cidade',l:'Cidade',w:'w3'},{k:'email',l:'E-mail',w:'w3'},{k:'whatsapp',l:'WhatsApp da redação (DDI+DDD+número)',w:'w3'},{k:'waVendas',l:'WhatsApp de vendas (recebe os clientes do robô)',w:'w3'},{k:'horarioAtendimento',l:'Horário dos vendedores',w:'w3'},{k:'botNome',l:'Nome do assistente virtual',w:'w3'},{k:'instagram',l:'Instagram (URL)',w:'w3'},{k:'facebook',l:'Facebook (URL)',w:'w3'},{k:'youtube',l:'Canal do YouTube (URL)',w:'w3'},{k:'x',l:'X/Twitter (URL)',w:'w3'}];
  return setForm('Aparência & site',SETF.aparencia,`<div class="notice" style="margin-bottom:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="grow">🎨 <b>Modelos do site</b> — veja os modelos e paletas aplicados ao site real e defina o padrão para todos os visitantes. Os leitores só escolhem entre tema claro e escuro.</span><button type="button" class="btn sm" onclick="location.hash='inicio';setTimeout(openModelos,350)">🎨 Ver e escolher modelos</button></div><div class="grid g3" style="margin-bottom:16px">${LAYOUTS.map(([k,n])=>`<div class="lay-opt">${laySVG[k]}<b class="small">${n}</b></div>`).join('')}</div>`)}
-function admGo(t){S.adm.tab=t;renderMain();window.scrollTo(0,0)}
+// cada tela do painel entra no histórico: a seta "voltar" do navegador/celular volta à tela anterior do painel
+function admGo(t,hist=true){if(hist&&curRoute==='gestao'&&S.adm.tab!==t)try{S.hiCur=Date.now();history.pushState({adm:t,hi:S.hiCur},'','#gestao')}catch(e){}S.adm.tab=t;renderMain();window.scrollTo(0,0)}
+window.addEventListener('popstate',e=>{if(location.hash==='#gestao'&&curRoute==='gestao'&&S.adm.logged){if(e.state&&e.state.hi)S.hiCur=e.state.hi;const t=(e.state&&e.state.adm)||'dash';if(t!==S.adm.tab)admGo(t,false)}});
+// a seta "voltar" nunca tira do painel; os botões "Ver o site" e similares saem normalmente.
+// Cada entrada do histórico recebe um carimbo de tempo: voltar = ir para uma entrada mais antiga que a atual.
+function hCarimbo(){const st=history.state||{};if(st.hi==null){const n={...st,hi:Date.now()};try{history.replaceState(n,'',location.href)}catch(e){}return[n.hi,true]}return[st.hi,false]}
 async function demoUsers(){let us=LS.get('fr_usuarios',null);if(us&&us.length)return us;const h=await sha('farol2026');const now=new Date().toISOString();
  us=[{id:'u-admin',nome:'Administrador',email:'admin@farolradiotv.com.br',papel:'admin',cargo:'Direção',hash:h,ativo:true,criado:now},{id:'u-jorn',nome:'Ana Repórter',email:'jornalista@farolradiotv.com.br',papel:'jornalista',cargo:'Repórter',hash:h,ativo:true,criado:now},{id:'u-vend',nome:'Carlos Vendas',email:'vendas@farolradiotv.com.br',papel:'vendedor',cargo:'Vendedor',hash:h,ativo:true,criado:now}];LS.set('fr_usuarios',us);return us}
 const pubUser=u=>{const o={...u};delete o.hash;return o};
@@ -2191,9 +2228,11 @@ function pgAdd(id){const p=S.data.produtos.find(x=>x.id===id);setTimeout(()=>{if
 function renderMain(){const h=curRoute;const[r,...rest]=h.split('-');const a=rest.join('-');clearTimeout(pollT);
  const html=!lojaOn()&&LOJA_R.includes(r)?pgLojaFechada():r==='inicio'?pgHome():r==='cat'?pgCat(a):r==='post'?pgPost(a):r==='videos'?pgVideos():r==='radio'?pgRadio():r==='loja'?pgLoja():r==='produto'?pgProduto(a):r==='carrinho'?pgCarrinho():r==='checkout'?pgCheckout():r==='pedido'?pgPedido(a):r==='gestao'?pgPainel():r==='busca'?pgBusca():r==='oracao'?pgOracao():r==='contato'?pgContato():r==='colunas'?pgColunas():r==='tag'?pgTag(a):r==='meuspedidos'?pgMeusPedidos():r==='conta'?pgConta(a):r==='privacidade'?pgPrivacidade():r==='add'?pgAdd(a):r==='redes'?pgRedes():pg404();
  if(r!=='conta')S.mePed=0;setTimeout(()=>{glBalance();if(document.fonts)document.fonts.ready.then(glBalance)},60);$('#main').innerHTML=(r!=='gestao'&&r!=='add'?adSlot('topo'):'')+(r!=='inicio'&&r!=='gestao'&&r!=='add'?navBar(r,a):'')+(STORE_R.includes(r)&&lojaOn()?storeBar(r):'')+html;carMount();if((r==='inicio'||r==='redes'||r==='videos')&&!S.soc.loaded)loadSocial();if(r==='checkout')mountCardBrick().catch(e=>console.error(e))}
+function admTabelas(){if(curRoute!=='gestao')return;document.querySelectorAll('#main table.t').forEach(t=>{const h=[...t.querySelectorAll('thead th')].map(x=>x.textContent.trim());t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((c,i)=>{c.setAttribute('data-l',h[i]||'');c.classList.toggle('longo',c.textContent.trim().length>38)}))})}
+new MutationObserver(()=>admTabelas()).observe(document.getElementById('main')||document.body,{childList:true,subtree:true});
 function renderAll(){document.documentElement.classList.toggle('sem-loja',!lojaOn());renderHeader(curRoute);renderMain();renderFooter();renderPlayer();renderAdMob();$('#modelos-fab').classList.add('hide');document.body.classList.toggle('adm-mode',curRoute==='gestao');renderWA()}
 const TIT0=document.title;
-function route(){const prev=curRoute;curRoute=(location.hash||'#inicio').slice(1)||'inicio';if(!curRoute.startsWith('post-'))document.title=TIT0;renderAll();if(prev!==curRoute||!S.gPv){S.gPv=1;setTimeout(gPage,50)}if(prev!==curRoute)window.scrollTo(0,0)}
+function route(){const prev=curRoute;curRoute=(location.hash||'#inicio').slice(1)||'inicio';const[hi,novo]=hCarimbo();const volta=!novo&&hi<(S.hiCur||0);S.hiCur=hi;if(volta&&prev==='gestao'&&curRoute!=='gestao'&&S.adm.logged){try{S.hiCur=Date.now();history.pushState({adm:S.adm.tab,hi:S.hiCur},'','#gestao')}catch(e){}curRoute='gestao';return}if(!curRoute.startsWith('post-'))document.title=TIT0;renderAll();if(prev!==curRoute||!S.gPv){S.gPv=1;setTimeout(gPage,50)}if(prev!==curRoute)window.scrollTo(0,0)}
 window.addEventListener('hashchange',()=>{closeDrawer();route()});
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.btn,.chips button,.paytabs button,.icobtn,.gh-menu,.car-nav,.pbtn,.adm-nav button,.car-thumbs button,.lay-opt,.pal button');if(!b)return;const r=b.getBoundingClientRect();const d=Math.max(r.width,r.height)*2.2;const sp=document.createElement('span');sp.className='rip';sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;b.appendChild(sp);setTimeout(()=>sp.remove(),650)});
 setInterval(()=>{if(!$('#modal').classList.contains('on'))renderPlayer()},60000);
