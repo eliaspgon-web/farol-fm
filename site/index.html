@@ -737,7 +737,13 @@ html.sem-loja a[href="#loja"]:not(.ad-k),html.sem-loja a[href="#carrinho"],html.
 .gl-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--brand,var(--pri));color:#fff;border-radius:0 0 10px 10px;margin-top:-8px;padding:14px 16px 10px;font-size:13.5px;font-weight:700;position:relative;z-index:0}
 .gl-bar button{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:99px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:12.5px}
 .gl-row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px;padding-top:20px;border-top:1px solid #e3e3e3}
-.gl-row3 .gl-card{margin-bottom:0!important;height:100%;box-sizing:border-box}/* fileira de 3: mesma altura, alinhados embaixo */
+.gl-row3 .gl-card{margin-bottom:0!important;height:100%;box-sizing:border-box}
+/* colunas alinhadas embaixo: o último cartão de cada coluna mais curta cresce até a base da mais alta */
+@media (min-width:961px){
+.gl{align-items:stretch!important}.gl>.gl-c1,.gl>.gl-c2,.gl>.gl-c3{display:flex;flex-direction:column}.gl>.gl-c1>:last-child,.gl>.gl-c2>:last-child,.gl>.gl-c3>:last-child{flex-grow:1}
+.home-top{align-items:stretch}.home-top>div:first-child,.home-top>aside{display:flex;flex-direction:column}.home-top>div:first-child>:last-child{flex-grow:1}.home-top>div:first-child>.ht-cta:last-child{align-content:stretch}
+.home-top>aside>.card.cresce{flex-grow:1}
+html.medindo .gl,html.medindo .home-top{align-items:start!important}html.medindo .gl>*>*,html.medindo .home-top>*>*{flex-grow:0!important}.home-top>aside>:last-child,.home-top>div:first-child>:last-child,.gl>div>:last-child{margin-bottom:0!important}}/* fileira de 3: mesma altura, alinhados embaixo */
 .gl-card{margin-bottom:24px}.gl-card:last-child{margin-bottom:0}
 .gl-im{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:16/10;background:var(--line)}
 .gl-im img{width:100%;height:100%;object-fit:cover;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
@@ -2126,7 +2132,9 @@ function htBalance(){const ht=document.querySelector('.home-top');if(!ht)return;
   const box=document.createElement('div');box.className='ht-fill ht-cta';L.appendChild(box);
   for(let k=0;k<cards.length;k+=2){const add=cards.slice(k,k+2).map(([h,e,t,d])=>`<a class="card ht-c" href="${h}"${/^https/.test(h)?' target="_blank" rel="noopener"':''}><span>${e}</span><div><b>${t}</b><p class="small muted">${d}</p></div></a>`).join('');
    box.insertAdjacentHTML('beforeend',add);const g=A.getBoundingClientRect().height-fim();if(g<0&&k>0){[...box.children].slice(-2).forEach(c=>c.remove());break}if(g<90)break}}}
-function glBalance(){htBalance();const g=document.querySelector('.gl');if(!g||innerWidth<=960)return;g.querySelectorAll('.gl-fill').forEach(e=>e.remove());
+function asideCresce(){document.querySelectorAll('.home-top>aside,.gl aside').forEach(A=>{A.querySelectorAll('.cresce').forEach(e=>e.classList.remove('cresce'));const c=[...A.children].filter(e=>e.classList.contains('card'));if(c.length)c[c.length-1].classList.add('cresce')})}
+function glBalance(){const R=document.documentElement;R.classList.add('medindo');try{glBalance0()}finally{R.classList.remove('medindo')}}
+function glBalance0(){htBalance();asideCresce();const g=document.querySelector('.gl');if(!g||innerWidth<=960)return;g.querySelectorAll('.gl-fill').forEach(e=>e.remove());
  const cols=[...g.children].filter(c=>/gl-c\d/.test(c.className));if(cols.length<3)return;
  const used=new Set([...document.querySelectorAll('#main a[href^="#post-"]')].map(a=>a.getAttribute('href')));
  const pool=postsSorted().filter(p=>!used.has('#post-'+p.id));
@@ -2137,7 +2145,7 @@ function glBalance(){htBalance();const g=document.querySelector('.gl');if(!g||in
   colun.length?`<div class="gl-box"><h4>✍️ Colunas e artigos</h4>${colun.map(p=>`<a class="cl" href="#post-${p.id}"><span class="av">${esc(String(p.autor||'R').split(' ').filter(w=>w.length>2).slice(0,2).map(w=>w[0]).join(''))}</span><div><div class="small muted">${esc(p.autor||'')}</div><b style="font-size:14px">${esc(trunc(p.titulo,70))}</b></div></a>`).join('')}</div>`:'',
   `<div class="gl-box verse" style="border:0"><h4 style="color:rgba(255,255,255,.75)">Versículo do dia</h4><q>${esc(v.t)}</q><cite>${esc(v.r)}</cite></div>`,
   `<a class="gl-box" href="#oracao" style="display:block"><h4>🙏 Pedido de oração</h4><b>Nossa equipe ora por você</b><div class="small muted">Envie seu pedido — ele pode ser lido no ar na Hora da Oração.</div></a>`,
-  `<a class="gl-box" href="#conta" style="display:block"><h4>💌 Clube Farol</h4><b>Receba promoções e novidades</b><div class="small muted">Crie sua conta grátis${ST().cupomBoasVindas?' e ganhe o cupom '+esc(ST().cupomBoasVindas):''}.</div></a>`
+  lojaOn()&&`<a class="gl-box" href="#conta" style="display:block"><h4>💌 Clube Farol</h4><b>Receba promoções e novidades</b><div class="small muted">Crie sua conta grátis${ST().cupomBoasVindas?' e ganhe o cupom '+esc(ST().cupomBoasVindas):''}.</div></a>`
  ].filter(Boolean);
  const H=c=>[...c.children].reduce((t,e)=>{const r=e.getBoundingClientRect(),st=getComputedStyle(e);return t+r.height+parseFloat(st.marginTop)+parseFloat(st.marginBottom)},0);
  for(let k=0;k<14;k++){const h=cols.map(H);const max=Math.max(...h);const i=h.indexOf(Math.min(...h));const gap=max-h[i];if(gap<80)break;
