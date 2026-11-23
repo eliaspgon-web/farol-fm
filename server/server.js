@@ -71,7 +71,7 @@ const SETTINGS_MOD = {
   radio: ['rdsAtivo', 'rdsUrl', 'radioAuto', 'radioBarra', 'radioNome', 'radioFreq', 'streamUrl', 'ytChannelId', 'ytVideoId', 'aoVivo', 'programacao'],
   redes: ['ytChannelId', 'ytNome', 'ytHandle', 'youtube', 'igUser', 'instagram', 'igPosts', 'redesHome'],
   redacao: ['versiculos', 'versiculosAgenda', 'categorias', 'carrosselQtd'],
-  pagamentos: ['pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja'],
+  pagamentos: ['lojaAtiva', 'pixChave', 'pixNome', 'pixCidade', 'pixDesconto', 'parcelasMax', 'parcelasSemJuros', 'jurosMes', 'frete', 'freteGratisAcima', 'retirada', 'enderecoRetirada', 'taxaPix', 'taxaCredito', 'taxaDebito', 'mpPublicKey', 'catLoja'],
   publicidade: ['anuncieAqui', 'adMobile', 'adsenseClient', 'adsenseSlots', 'adOculto', 'comprovanteAuto', 'gaId', 'adsenseAuto', 'adsenseModo', 'gscVerify', 'cookiesAviso', ...['topo', 'home1', 'home2', 'lateral1', 'lateral2', 'materia2', 'loja', 'radio', 'rodape', 'mobile'].map((k) => 'adOff_' + k)],
   campanhas: ['googleClientId', 'cupomBoasVindas', 'politicaPrivacidade'],
   comentarios: ['comentariosAtivo', 'comentariosModeracao', 'comentariosLogin', 'palavrasBloqueadas'],
@@ -304,6 +304,7 @@ app.post('/api/oracoes', limit(5), (req, res) => {
 
 /* checkout */
 app.post('/api/checkout', limit(10), ok(async (req, res) => {
+  if (settings().lojaAtiva === false) return res.status(403).json({ error: 'A loja está fechada no momento.' });
   const { itens, cupom, entrega, metodo, cliente = {}, card } = req.body || {};
   if (!['pix', 'credito', 'debito'].includes(metodo)) throw new Error('Forma de pagamento inválida');
   for (const k of ['nome', 'email', 'tel', 'cpf']) if (!cliente[k]) throw new Error('Dados do cliente incompletos');
