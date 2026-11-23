@@ -55,7 +55,7 @@ const COLS = ['posts', 'videos', 'produtos', 'cupons', 'promocoes', 'pedidos', '
 const TODOS_MODULOS = ['dash', 'atendimento', 'equipe', 'aparencia', 'publicidade', 'redacao', 'posts', 'comentarios', 'videos', 'oracoes', 'radio', 'redes', 'loja', 'pedidos', 'clientes', 'produtos', 'estoque', 'promocoes', 'cupons', 'campanhas', 'financeiro', 'pagamentos'];
 const PERFIS = {
   admin: { m: TODOS_MODULOS, pub: true }, editor: { m: ['dash', 'redacao', 'posts', 'comentarios', 'videos', 'oracoes', 'radio', 'redes'], pub: true },
-  jornalista: { m: ['dash', 'redacao', 'posts', 'comentarios', 'videos'], pub: false }, colunista: { m: ['dash', 'posts'], pub: false },
+  jornalista: { m: ['dash', 'redacao', 'posts', 'comentarios', 'videos'], pub: true }, colunista: { m: ['dash', 'posts'], pub: false },
   locutor: { m: ['dash', 'radio', 'oracoes', 'redes', 'videos'], pub: false },
   gerente: { m: ['dash', 'loja', 'pedidos', 'clientes', 'produtos', 'estoque', 'promocoes', 'cupons', 'campanhas', 'financeiro', 'pagamentos', 'atendimento'], pub: false },
   vendedor: { m: ['dash', 'atendimento', 'loja', 'pedidos', 'clientes'], pub: false }, comercial: { m: ['dash', 'publicidade', 'campanhas'], pub: false },
