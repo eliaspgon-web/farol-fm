@@ -419,7 +419,8 @@ app.get('/api/admin/bootstrap', auth(), (req, res) => {
   const LEITURA = { posts: ['posts', 'redacao'], videos: ['videos', 'redes'], oracoes: ['oracoes'], musicas: ['oracoes'], produtos: ['produtos', 'estoque', 'loja', 'pedidos', 'promocoes', 'publicidade', 'campanhas', 'atendimento'], cupons: ['cupons', 'campanhas', 'loja'], promocoes: ['promocoes', 'loja', 'produtos'], pedidos: ['pedidos', 'loja', 'financeiro', 'clientes', 'atendimento'], conversas: ['atendimento'], anuncios: ['publicidade'], comentarios: ['comentarios'] };
   const o = {}; for (const c of COLS) o[c] = can(req.user, LEITURA[c] || COL_MOD[c]) ? all(c) : (c === 'posts' ? all(c).filter((p) => p.status === 'publicado') : []);
   o.conversas.forEach((c) => delete c.k);
-  if (papelOk(req.user.papel) === 'admin') o.usuarios = all('usuarios').map(userPub);
+  // administrador e quem gerencia a equipe recebem a lista de usuários (para o painel de postagens por usuário)
+  if (papeisDe(req.user).includes('admin') || modsDe(req.user).includes('equipe')) o.usuarios = all('usuarios').map(userPub);
   o.me = { ...req.user, modulos: modsDe(req.user), publicar: pubDe(req.user) };
   o.pedidos.sort((a, b) => b.data.localeCompare(a.data)); o.oracoes.sort((a, b) => b.data.localeCompare(a.data));
   const s = { ...settings() }; delete s.id; o.settings = s; res.json(o);
